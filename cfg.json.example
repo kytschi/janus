@@ -1,4 +1,7 @@
 {
+    "iptables_bin": "/sbin/iptables",
+    "iptables_cfg_folder": "/etc/iptables",
+    "iptables_cfg_file_v4": "rules.v4",
     "log_folders": [
         "/mnt/storage/Development/nginx"
     ],

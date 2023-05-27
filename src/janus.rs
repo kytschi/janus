@@ -10,6 +10,7 @@ use std::process::Command;
 
 #[derive(Deserialize, Debug)]
 struct Cfg {
+    sudo: bool,
     iptables_bin: String,
     iptables_cfg_folder: String,
     iptables_cfg_file_v4: String,
@@ -30,7 +31,7 @@ fn main() {
     // Load the config.
     let mut cfg: Cfg = load_cfg("cfg.json").unwrap();
     // Load the ips.
-    let mut ips: Ips = load_ips("ips.json").unwrap();
+    let mut ips: Ips = load_ips("ips.json".to_string()).unwrap();
 
     // Process the patterns.
     for file in cfg.patterns.iter() {
@@ -67,13 +68,20 @@ fn load_cfg<P: AsRef<Path>>(path: P) -> Result<Cfg, Box<dyn Error>> {
 /**
  * Load the ips.json.
  */
-fn load_ips<P: AsRef<Path>>(path: P) -> Result<Ips, Box<dyn Error>> {
+fn load_ips(path: String) -> Result<Ips, Box<dyn Error>> {
     println!("Loading IPs JSON");
 
-    let file = File::open(path).expect("Failed to load the IPs JSON");
-    let reader = BufReader::new(file);
+    let mut ips = Ips {
+        blacklist: vec![],
+        whitelist: vec![]
+    };
 
-    let ips = serde_json::from_reader(reader)?;
+    if Path::new(&path).exists() {
+        let file = File::open(path).expect("Failed to read the IPs JSON");
+        let reader = BufReader::new(file);
+        ips = serde_json::from_reader(reader)?;
+    }
+    
     Ok(ips)
 }
 
@@ -99,7 +107,7 @@ fn load_patterns(path: String) {
  */
 fn process_logs(path: String, ips: &mut Ips) -> Result<(), Box<dyn Error>> {
     println!("Reading {}", path);
-    let files = fs::read_dir(path)?;
+    let files = fs::read_dir(path).expect("Failed to read the folder");
     
     for file in files {
         let log: String = file.unwrap().path().display().to_string();
@@ -107,7 +115,7 @@ fn process_logs(path: String, ips: &mut Ips) -> Result<(), Box<dyn Error>> {
             continue;
         }
 
-        let log: File = File::open(log)?;
+        let log: File = File::open(log).expect("Failed to read the log file");
         for line in BufReader::new(log).lines() {
             let search: String = line.unwrap();
             unsafe {
@@ -136,38 +144,96 @@ fn process_logs(path: String, ips: &mut Ips) -> Result<(), Box<dyn Error>> {
  */
 fn setup_iptables(ips: &mut Ips, cfg: &mut Cfg) {
     //Create the iptables group for JANUS.
-    let command: Vec<String> = vec![cfg.iptables_bin.to_string(), " -N JANUS".to_string()];
-    println!("Executing {}", command.join(""));
-    let output: std::process::Output = Command::new(command.join("")).output().expect("Failed to create the iptables group");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    let mut command: String = cfg.iptables_bin.to_string();
+    let mut arg: String = "-N JANUS".to_string();
+    if cfg.sudo {
+        let join: Vec<String> = vec![cfg.iptables_bin.to_string(), "-N JANUS".to_string()];
+        command = "sudo".to_string();
+        arg = join.join("");
+    }
+
+    Command::new(&command)
+        .arg(arg)
+        .output()
+        .expect("Failed to create the iptables group");
 
     //Flush the iptables group for JANUS.
-    let command: Vec<String> = vec![cfg.iptables_bin.to_string(), " -F JANUS".to_string()];
-    println!("Executing {}", command.join(""));
-    let output: std::process::Output = Command::new(command.join("")).output().expect("Failed to flush the iptables group");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    arg = "-F JANUS".to_string();
+    if cfg.sudo {
+        let join: Vec<String> = vec![cfg.iptables_bin.to_string(), "-F JANUS".to_string()];
+        arg = join.join("");
+    }
+    Command::new(&command)
+        .arg(arg)
+        .output()
+        .expect("Failed to flush the iptables group");
 
     //Add the ips to the iptables group.
     for ip in ips.blacklist.iter() {
-        let command: Vec<String> = vec![cfg.iptables_bin.to_string(), " -A JANUS -s".to_string(), ip.to_string(), " -j DROP".to_string()];
-        println!("Executing {}", command.join(""));
-        let output: std::process::Output = Command::new(command.join("")).output().expect("Failed to add the IP to the group");
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+        let join: Vec<String> = vec![
+            " -A JANUS -s".to_string(),
+            ip.to_string(),
+            " -j DROP".to_string()
+        ];
+        arg = join.join("");
+        if cfg.sudo {
+            let join: Vec<String> = vec![
+                cfg.iptables_bin.to_string(),
+                " -A JANUS -s".to_string(),
+                ip.to_string(),
+                " -j DROP".to_string()
+            ];
+            arg = join.join("");
+        }
+        
+        Command::new(&command)
+            .arg(arg)
+            .output()
+            .expect("Failed to add the IP to the group");
     }
 
     // Create the folder for saving the iptables config too.
     if !Path::new(&cfg.iptables_cfg_folder).is_dir() {
-        let command: Vec<String> = vec!["mkdir ".to_string(), cfg.iptables_cfg_folder.to_string()];
-        println!("Executing {}", command.join(""));
-        let output: std::process::Output = Command::new(command.join("")).output().expect("Failed to create the iptables config folder");
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+        command = "mkdir".to_string();
+        arg = cfg.iptables_cfg_folder.to_string();
+        if cfg.sudo {
+            command = "sudo".to_string();
+            let join: Vec<String> = vec!["mkdir ".to_string(), cfg.iptables_cfg_folder.to_string()];
+            arg = join.join("");
+        }
+        Command::new(&command)
+            .arg(arg)
+            .output()
+            .expect("Failed to create the iptables config folder");
     }
 
     // Save the iptables config v4 file.
-    let command: Vec<String> = vec![cfg.iptables_bin.to_string(), "-save > ".to_string(), cfg.iptables_cfg_folder.to_string(), cfg.iptables_cfg_file_v4.to_string()];
-    println!("Executing {}", command.join(""));
-    let output: std::process::Output = Command::new(command.join("")).output().expect("Failed to save the iptables v4 config");
-    println!("{}", String::from_utf8_lossy(&output.stdout));
+    let join: Vec<String> = vec![
+        cfg.iptables_bin.to_string(),
+        "-save".to_string()
+    ];
+    command = join.join("");
+
+    let join: Vec<String> = vec![
+        "> ".to_string(),
+        cfg.iptables_cfg_folder.to_string(),
+        cfg.iptables_cfg_file_v4.to_string()
+    ];
+    arg = join.join("");
+    if cfg.sudo {
+        command = "sudo".to_string();
+        let join: Vec<String> = vec![
+            cfg.iptables_bin.to_string(),
+            "-save > ".to_string(),
+            cfg.iptables_cfg_folder.to_string(),
+            cfg.iptables_cfg_file_v4.to_string()
+        ];
+        arg = join.join("");
+    }
+    Command::new(&command)
+            .arg(arg)
+            .output()
+            .expect("Failed to save the iptables v4 config");
 }
 
 /**
