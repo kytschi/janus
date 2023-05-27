@@ -1,0 +1,10 @@
+{
+    "log_folders": [
+        "/mnt/storage/Development/nginx"
+    ],
+    "patterns": [
+        "general",
+        "wordpress",
+        "hex"
+    ]
+}
