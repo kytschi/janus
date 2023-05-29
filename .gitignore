@@ -1,3 +1,8 @@
-/target
-ips.json
-cfg.json
+.zephir
+ext
+compile-errors.log
+compile.log
+ui.php
+janus.json
+composer.lock
+vendor*

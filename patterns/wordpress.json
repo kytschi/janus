@@ -1,8 +1,8 @@
-[
-    "/wp-info.php",
-    "/wp-class.php",
-    "/wp-admin",
-    "/wp-login.php",
-    "/wordpress",
-    "/wp-content/plugins/woocommerce/readme.txt"
-]
+{
+    "/wp-info.php": "WordPress",
+    "/wp-class.php": "WordPress",
+    "/wp-admin": "WordPress",
+    "/wp-login.php": "WordPress",
+    "/wordpress": "WordPress",
+    "/wp-content/plugins/woocommerce/readme.txt": "WordPress"
+}
