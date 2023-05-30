@@ -24,66 +24,26 @@
 */
 namespace Janus;
 
+use Janus\Controllers\Blacklist;
+use Janus\Controllers\Database;
 use Janus\Exceptions\Exception;
 use Janus\Helpers\Captcha;
 use Janus\Ui\Head;
 
 class Janus
 {
-    private cfg;
-    private cfg_file;
+    private settings;
+    private db;
 
-    public function __construct(string cfg_file)
+    public function __construct(string db)
     {
-        if (!file_exists(cfg_file)) {
-            throw new Exception("Failed to load the config file");
+        if (!file_exists(db)) {
+            throw new Exception("SQLite DB not found");
         }
 
-        let this->cfg_file = cfg_file;
-
-        var cfg;
-        let cfg = new \stdClass();
-        let cfg = json_decode(file_get_contents(cfg_file), false, 512, JSON_THROW_ON_ERROR);
-
-        if (empty(cfg)) {
-            throw new Exception("Invalid config file");
-        }
-
-        if (is_object(cfg->ip_countries)) {
-            let cfg->ip_countries = get_object_vars(cfg->ip_countries);
-        } else {
-            let cfg->ip_countries = [];
-        }
-
-        if (is_object(cfg->stat_patterns)) {
-            let cfg->stat_patterns = get_object_vars(cfg->stat_patterns);
-        }  else {
-            let cfg->stat_patterns = [];
-        }
-
-        let this->cfg = cfg;
-
-        var property, properties = [
-            "iptables_bin",
-            "iptables_cfg_folder",
-            "iptables_cfg_file_v4",
-            "ip_lookup",
-            "logs",
-            "block_patterns_folder",
-            "block_patterns",
-            "access"
-        ];
-
-        for property in properties {
-            if (!property_exists(this->cfg, property)) {
-                throw new Exception("Invalid config file");
-            }
-
-            if (empty(this->cfg->{property})) {
-                throw new Exception("Invalid config file, check `" . property . "`");
-            }
-        }
-
+        let this->db = new Database(db);
+        let this->settings = this->db->get("SELECT * FROM settings LIMIT 1");
+        
         if (session_status() === 1) {
             session_name("janus");
             session_start();
@@ -91,12 +51,14 @@ class Janus
 
         var routes = [
             "/dashboard": "dashboard",
-            "/scan": "scan",
             "/scan-warn": "scanWarn",
-            "/the-secure-door": "login"
+            "/scan": "scan",
+            "/blacklist": "blacklist",
+            "/the-secure-door": "login",
+            "/logout": "logout"
         ];
 
-        var code = 200, path, parsed, output = "", route, logged_in = false;
+        var code = 200, path, parsed, output = "", route, func, logged_in = false;
 
         let parsed = parse_url(_SERVER["REQUEST_URI"]);
         let path = "/" . trim(parsed["path"], "/");
@@ -116,11 +78,13 @@ class Janus
             let logged_in = true;
         }
 
-        if (!empty(routes[path])) {
-            let route = routes[path];
-            let output = this->{route}();
+        for route, func in routes {
+            if (strpos(path, route) !== false) {
+                let output = this->{func}(path);
+                break;
+            }
         }
-
+        
         if (empty(output)) {
             let code = 404;
             let output = this->notFound();
@@ -131,16 +95,25 @@ class Janus
         this->footer(logged_in);
     }
 
-    private function dashboard()
+    private function blacklist(string path)
     {
-        return "<h1>Dashboard</h1>
-        <div class='page-toolbar'>
-            <a href='/dashboard' class='round icon icon-dashboard' title='Dashboard'>&nbsp;</a>
-            <a href='/scan-warn' class='round icon icon-events' title='Scan the logs'>&nbsp;</a>
-        </div>
+        var controller;
+        let controller = new Blacklist();
+        return controller->router(path, this->db);
+    }
+
+    private function dashboard(string path)
+    {
+        var head;
+        let head = new Head();
+        return "<h1>Dashboard</h1>" . head->toolbar() . "        
         <div class='row'>" .
-            this->patternsUI() .
-            (this->cfg->ip_lookup === true ? this->ipCountriesUI() : "") . 
+            this->patternsUI() .            
+        "</div>
+        <h2>IP summary</h2>
+        <div class='row'>" . 
+            (this->settings->service_lookup ? this->ipServicesUI() : "") . 
+            (this->settings->ip_lookup ? this->ipCountriesUI() : "") . 
         "</div>";
     }
 
@@ -158,6 +131,63 @@ class Janus
     private function footer(bool logged_in = false)
     {
         echo "</main></body></html>";
+    }
+
+    private function getCountry(ip)
+    {
+        var output, splits;
+        let output = shell_exec("geoiplookup " . ip);
+        if (output) {
+            let splits = explode(":", output);
+            let splits = explode(",", splits[count(splits) - 1]);
+            unset(splits[0]);
+            return trim(implode(",", splits));
+        }
+        return null;
+    }
+
+    private function getService(ip)
+    {
+        var output, line, lines, netname = null;
+
+        let output = shell_exec("whois " . ip);
+        if (output) {
+            let lines = explode("\n", strtolower(output));
+            
+            for line in lines {
+                if(strpos(line, "orgname:") !== false) {
+                    let netname = trim(ltrim(line, "orgname:"));
+                    break;
+                }
+
+                if(strpos(line, "org-name:") !== false && !netname) {
+                    let netname = trim(ltrim(line, "org-name:"));
+                }
+
+                if(strpos(line, "netname:") !== false) {
+                    let netname = trim(ltrim(line, "netname:"));
+                }
+
+                if(strpos(line, "owner:") !== false && !netname) {
+                    let netname = trim(ltrim(line, "owner:"));
+                }
+
+                if(strpos(line, "organization name") !== false && !netname) {
+                    let netname = str_replace([":"], "", trim(ltrim(line, "organization name")));
+                }
+                
+
+                if(strpos(line, "descr:") !== false && netname) {
+                    let netname = trim(ltrim(line, "descr:"));
+                    break;
+                }
+            }
+        }
+        
+        return [
+            output,
+            (netname) ? ucwords(strtolower(netname)) : null
+        ];
     }
 
     private function head(int code = 200)
@@ -178,30 +208,30 @@ class Janus
 
     private function ipCountriesUI()
     {
-        var height = 200, labels = [], totals = [], colours = [];
+        var height = 200, labels = [], totals = [], colours = [], data;
 
-        if (!empty(this->cfg->ip_countries)) {
-            var label, value;
-            let height = count(this->cfg->ip_countries) * 30;
-
-            for label, value in this->cfg->ip_countries {
-                let labels[] = "\"" . label . "\"";
-                let totals[] = value;
-                let colours[] = "\"#" . substr(md5(label), 3, 6) . "\"";
+        let data = this->db->all("SELECT COUNT(id) AS total, country FROM blacklist GROUP BY country ORDER BY total");
+        if (!empty(data)) {
+            var item;
+            for item in data {
+                let labels[] = "\"" . item->country . "\"";
+                let totals[] = intval(item->total);
+                let colours[] = "\"#" . substr(md5(item->country), 3, 6) . "\"";
             }
 
+            let height = count(data) * 30;
             if (height < 200) {
                 let height = 200;
             }
         }
-
+        
         let labels = implode(",", labels);
         let totals = implode(",", totals);
         let colours = implode(",", colours);
 
         return  "<div class='box'>
         <div class='box-title'>
-            <span>IP source countries</span>
+            <span>Locations</span>
         </div>
         <div class='box-body'>
             <canvas id='countries' width='600' height='" . height . "'></canvas>
@@ -214,7 +244,7 @@ class Janus
                         labels: [" . labels . "],
                         datasets: [
                             {
-                                label: 'countries',
+                                label: 'IPs',
                                 data: [" . totals . "],
                                 backgroundColor: [" . colours . "],
                                 borderColor: '#5E5E60',
@@ -255,7 +285,86 @@ class Janus
         </div></div>";
     }
 
-    private function login()
+    private function ipServicesUI()
+    {
+        var height = 200, labels = [], totals = [], colours = [], data;
+
+        let data = this->db->all("SELECT COUNT(id) AS total, service FROM blacklist GROUP BY service ORDER BY total");
+        if (!empty(data)) {
+            var item;
+            for item in data {
+                let labels[] = "\"" . item->service . "\"";
+                let totals[] = item->total;
+                let colours[] = "\"#" . substr(md5(item->service), 3, 6) . "\"";
+            }
+
+            let height = count(data) * 30;
+            if (height < 200) {
+                let height = 200;
+            }
+        }
+        
+        let labels = implode(",", labels);
+        let totals = implode(",", totals);
+        let colours = implode(",", colours);
+
+        return  "<div class='box'>
+        <div class='box-title'>
+            <span>Services</span>
+        </div>
+        <div class='box-body'>
+            <canvas id='services' width='600' height='" . height . "'></canvas>
+            <script type='text/javascript'>
+                var ctx_services = document.getElementById('services').getContext('2d');
+                
+                var services = new Chart(ctx_services, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: [" . labels . "],
+                        datasets: [
+                            {
+                                label: 'IPs',
+                                data: [" . totals . "],
+                                backgroundColor: [" . colours . "],
+                                borderColor: '#5E5E60',
+                                borderWidth: 0.4
+                            },
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            xAxes: [
+                                {
+                                    gridLines: {
+                                        display: true
+                                    },
+                                    ticks: {
+                                        beginAtZero: true
+                                    },
+                                    position: 'top'
+                                }
+                            ],
+                        },
+                        responsive: true,
+                        legend: {
+                            display: false
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            },
+                            title: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            </script>
+        </div></div>";
+    }
+
+    private function login(string path)
     {
         var html, captcha;
         let captcha = new Captcha();
@@ -271,14 +380,20 @@ class Janus
                         let html .= this->error("Invalid captcha");
                     } else {
                         var user;
-                        let user = _POST["u"];
-                        if (property_exists(this->cfg->access, user)) {
-                            if (password_verify(_POST["p"], this->cfg->access->{user})) {
+                        let user = this->db->get(
+                            "SELECT * FROM users WHERE name=:name",
+                            [
+                                "name": _POST["u"]
+                            ]
+                        );
+
+                        if (!empty(user)) {
+                            if (password_verify(_POST["p"], user->password)) {
                                 let _SESSION["janus"] = md5(time());
                                 this->redirect("/dashboard");
                             }
                         }
-
+                        
                         let _SESSION["janus"] = null;
                         session_write_close();
 
@@ -308,6 +423,13 @@ class Janus
         return html;
     }
 
+    private function logout(string path)
+    {
+        let _SESSION["janus"] = null;
+        session_write_close();
+        this->redirect("/the-secure-door");
+    }
+
     private function notFound()
     {
         return "
@@ -326,23 +448,23 @@ class Janus
 
     private function patternsUI()
     {
-        var height = 200, labels = [], totals = [], colours = [];
+        var height = 200, labels = [], totals = [], colours = [], data;
 
-        if (!empty(this->cfg->stat_patterns)) {
-            var label, value;
-            let height = count(this->cfg->stat_patterns) * 30;
-
-            for label, value in this->cfg->stat_patterns {
-                let labels[] = "\"" . label . "\"";
-                let totals[] = value;
-                let colours[] = "\"#" . substr(md5(label), 3, 6) . "\"";
+        let data = this->db->all("SELECT * FROM found_block_patterns");
+        if (!empty(data)) {
+            var item;
+            for item in data {
+                let labels[] = "\"" . item->label . "\"";
+                let totals[] = item->total;
+                let colours[] = "\"#" . substr(md5(item->label), 3, 6) . "\"";
             }
 
+            let height = count(data) * 30;
             if (height < 200) {
                 let height = 200;
             }
         }
-
+        
         let labels = implode(",", labels);
         let totals = implode(",", totals);
         let colours = implode(",", colours);
@@ -409,55 +531,16 @@ class Janus
         die();
     }
 
-    private function getCountry(ip)
+    private function scan(string path)
     {
-        var output, splits;
-        let output = shell_exec("geoiplookup " . ip);
-        if (output) {
-            let splits = explode(":", output);
-            let splits = explode(",", splits[count(splits) - 1]);
-            unset(splits[0]);
-            return trim(implode(",", splits));
-        }
-        return null;
-    }
+        var folder, dir, logs, log, lines, line, pattern, patterns = [],
+            matches, db_logs, data, country, service, whois;
 
-    private function scan()
-    {
-        if (empty(this->cfg->logs)) {
-            throw new Exception("No log folders defined to scan");
-        }
-
-        if (empty(this->cfg->block_patterns)) {
-            throw new Exception("No block patterns defined to scan for");
-        }
-
-        var cfg;
-        let cfg = this->cfg;
-        if (!property_exists(cfg, "blacklist")) {
-            let cfg->blacklist = [];
-        }
-
-        //Always ignore localhost.
-        let cfg->whitelist[] = "127.0.0.1";
-
-        var folder, dir, logs, log, lines, line, pattern, patterns = [], matches, err, country;
-
-        for log in this->cfg->block_patterns {
-            let lines = get_object_vars(
-                json_decode(
-                    file_get_contents(rtrim(cfg->block_patterns_folder, "/") . "/" .  log . ".json"),
-                    false,
-                    512,
-                    JSON_THROW_ON_ERROR
-                )
-            );
-            
-            let patterns = array_merge(patterns, lines);
-        }
-
-        for folder in cfg->logs {
-            let dir = shell_exec("ls " . folder);
+        let patterns = this->db->all("SELECT * FROM block_patterns");
+        let db_logs = this->db->all("SELECT * FROM logs");
+        
+        for folder in db_logs {
+            let dir = shell_exec("ls " . folder->log);
             if (empty(dir)) {
                 throw new Exception("Failed to list the logs folder");
             }
@@ -481,48 +564,70 @@ class Janus
                         continue;
                     }
                     
-                    for pattern, dir in patterns {
-                        if (strpos(line, pattern) === false) {
+                    for pattern in patterns {
+                        if (strpos(line, pattern->pattern) === false) {
                             continue;
                         }
 
+                        this->db->execute(
+                            "INSERT OR REPLACE INTO found_block_patterns
+                                (id, 'total', 'label') 
+                            VALUES 
+                                (
+                                    (SELECT id FROM found_block_patterns WHERE label=:label),
+                                    (SELECT IFNULL(total, 1) AS TOTAL FROM found_block_patterns WHERE label=:label) + 1,
+                                    :label
+                                )",
+                            ["label": pattern->label]
+                        );
+
                         if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
-                            if (in_array(cfg->whitelist, matches[0])) {
+                            //Always ignore localhost.
+                            if (matches[0] == "127.0.0.1") {
                                 break;
                             }
-                            if (!in_array(cfg->blacklist, matches[0])) {
-                                let cfg->blacklist[] = matches[0];
+                            let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
+                            if (!empty(data)) {
+                                break;
+                            }
 
-                                if (cfg->ip_lookup) {
-                                    let country = this->getCountry(matches[0]);
-                                    if (country) {
-                                        if (isset(cfg->ip_countries[country])) {
-                                            let cfg->ip_countries[country] = intval(cfg->ip_countries[country]) + 1;
-                                        } else {
-                                            let cfg->ip_countries[country] = 1;
-                                        }
-                                    }
+                            let country = "UNKNOWN";
+                            if (this->settings->ip_lookup) {
+                                let country = this->getCountry(matches[0]);
+                            }
+
+                            let service = "UNKNOWN";
+                            let whois = "UNKNOWN";
+                            if (this->settings->service_lookup) {
+                                let data = this->getService(matches[0]);
+                                let whois = data[0];
+                                if (data[1]) {
+                                    let service = data[1];
                                 }
                             }
-                        }
 
-                        if (isset(cfg->stat_patterns[dir])) {
-                            let cfg->stat_patterns[dir] = intval(cfg->stat_patterns[dir]) + 1;
-                        } else {
-                            let cfg->stat_patterns[dir] = 1;
+                            this->db->execute(
+                                "INSERT OR REPLACE INTO blacklist
+                                    (id, 'ip', 'country', 'whois', 'service') 
+                                VALUES 
+                                    (
+                                        (SELECT id FROM blacklist WHERE ip=:ip),
+                                        :ip,
+                                        :country,
+                                        :whois,
+                                        :service
+                                    )",
+                                [
+                                    "ip": matches[0],
+                                    "country": country,
+                                    "whois": whois,
+                                    "service": service
+                                ]
+                            );
                         }
                     }
                 }
             }
-        }
-
-        try {
-            if (!file_put_contents(this->cfg_file, json_encode(cfg))) {
-                throw new Exception("make sure the web user has permissions to write to the cfg");
-            }
-            let this->cfg = cfg;
-        } catch \Exception, err {
-            throw new Exception("Failed to save the cfg, " . strtolower(err->getMessage()));
         }
 
         return "<h1>Scanning logs</h1>
@@ -535,9 +640,11 @@ class Janus
             </div></div>";
     }
 
-    private function scanWarn()
+    private function scanWarn(string path)
     {
-        return "<h1>Scan logs</h1>
+        var head;
+        let head = new Head();
+        return "<h1>Scan logs</h1> " . head->toolbar() . "
             <div class='box wfull'>
             <div class='box-title'>
                 <span>Scan the logs</span>

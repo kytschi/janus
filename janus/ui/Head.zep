@@ -230,17 +230,16 @@ class Head
             cursor: pointer;
             width: 40px !important;
             height: 40px !important;
+            float: left;
+            margin-right: 5px;
         }
         .mini.icon::before {
             width: 40px !important;
             height: 40px !important;
             left: 0px !important;
             top: 0px !important;
-            background-size: 400px 400px;
+            background-size: 400px 80px;
             
-        }
-        .mini.icon-edit::before {
-            background-position: -160px -40px !important;
         }
         .deleted .round, .deleted .button, .deleted button {
             background-color: var(--box-deleted-background-colour);
@@ -403,16 +402,64 @@ class Head
             background-repeat: no-repeat;
             background-position: 0 0;
         }
-        .icon-janus::before {
-            width: 80px;
-            height: 68px;
-            left: 14px;
-            top: 16px;
-            background-position: -512px -64px;
-        }
         .icon-dashboard::before {
-            background-position: -384px -64px;
+            background-position: 0px 0px;
+        }
+        .icon-users::before {
+            background-position: -64px 0px;
+        }
+        .icon-settings::before {
+            background-position: -128px 0px;
+        }
+        .icon-scan::before {
+            background-position: -192px 0px;
+        }
+        .icon-logout::before {
+            background-position: -256px 0px;
+        }
+        .icon-edit::before {
+            background-position: -320px 0px;
+        }
+        .mini.icon-edit::before {
+            background-position: -200px 0px !important;
+        }
+        .icon-delete::before {
+            background-position: -384px 0px;
+        }
+        .mini.icon-delete::before {
+            background-position: -240px 0px !important;
+        }
+        .icon-next::before {
+            background-position: -448px 0px;
+        }
+        .icon-prev::before {
+            background-position: -512px 0px;
+        }
+        .icon-blacklist::before {
+            background-position: -576px 0px;
+        }
+        .icon-whitelist::before {
+            background-position: 0px -64px;
+        }
+        .mini.icon-whitelist::before {
+            background-position: 0px -40px !important;
+        }
+        .icon-patterns::before {
+            background-position: -64px -64px;
         }
         </style>";
+    }
+
+    public function toolbar()
+    {
+        return "<div class='page-toolbar'>
+            <a href='/dashboard' class='round icon icon-dashboard' title='Dashboard'>&nbsp;</a>
+            <a href='/scan-warn' class='round icon icon-scan' title='Scan the logs'>&nbsp;</a>
+            <a href='/blacklist' class='round icon icon-blacklist' title='Blacklisted IPs'>&nbsp;</a>
+            <a href='/whitelist' class='round icon icon-whitelist' title='Whitelisted IPs'>&nbsp;</a>
+            <a href='/patterns' class='round icon icon-patterns' title='Scan patterns'>&nbsp;</a>
+            <a href='/settings' class='round icon icon-settings' title='Settings'>&nbsp;</a>
+            <a href='/logout' class='round icon icon-logout' title='Logout'>&nbsp;</a>
+        </div>";
     }
 }

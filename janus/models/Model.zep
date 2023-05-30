@@ -1,7 +1,7 @@
-<?php
 /**
- * Janus example index
+ * Janus model
  *
+ * @package     Janus\Models\Model
  * @author 		Mike Welsh
  * @copyright   2023 Mike Welsh
  * @version     0.0.1
@@ -21,12 +21,10 @@
  * License along with this library; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301, USA.
- */
-use Janus\Janus;
-use Janus\Exceptions\Exception;
+*/
+namespace Janus\Models;
 
-try {
-    new Janus('../janus.db');
-} catch (\Exception $err) {
-    (new Exception($err->getMessage()))->fatal();
+class Model extends \stdClass
+{
+    //
 }
