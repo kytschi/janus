@@ -1,7 +1,7 @@
 /**
- * Janus blacklist builder
+ * Janus whitelist builder
  *
- * @package     Janus\Controllers\Blacklist
+ * @package     Janus\Controllers\Whitelist
  * @author 		Mike Welsh
  * @copyright   2023 Mike Welsh
  * @version     0.0.1
@@ -27,22 +27,22 @@ namespace Janus\Controllers;
 use Janus\Controllers\Controller;
 use Janus\Exceptions\Exception;
 
-class Blacklist extends Controller
+class Whitelist extends Controller
 {
     public routes = [
-        "/blacklist/delete/": "delete",
-        "/blacklist/edit/": "edit",
-        "/blacklist/whitelist/": "whitelist",
-        "/blacklist": "index"
+        "/whitelist/delete/": "delete",
+        "/whitelist/edit/": "edit",
+        "/whitelist/blacklist/": "blacklist",
+        "/whitelist": "index"
     ];
 
-    public function delete(string path)
+    public function blacklist(string path)
     {
         var data, status;
         let data = this->db->get(
-            "SELECT * FROM blacklist WHERE id=:id",
+            "SELECT * FROM whitelist WHERE id=:id",
             [
-                "id": str_replace("/blacklist/delete/", "", path)
+                "id": str_replace("/whitelist/blacklist/", "", path)
             ]
         );
 
@@ -50,22 +50,66 @@ class Blacklist extends Controller
             throw new Exception("Entry not found");
         }
 
-        let status = this->db->execute("DELETE FROM blacklist WHERE id=:id", ["id": data->id]);
+        let status = this->db->execute("DELETE FROM whitelist WHERE id=:id", ["id": data->id]);
         if (!is_bool(status)) {
             throw new Exception(status);
         } 
-        this->redirect("/blacklist?deleted=true");
+        
+        let status = this->db->execute(
+            "INSERT OR REPLACE INTO blacklist
+                (id, 'ip', 'country', 'whois', 'service') 
+            VALUES 
+                (
+                    (SELECT id FROM blacklist WHERE ip=:ip),
+                    :ip,
+                    :country,
+                    :whois,
+                    :service
+                )",
+            [
+                "ip": data->ip,
+                "country": data->country,
+                "service": data->service,
+                "whois": data->whois
+            ]
+        );
+        if (!is_bool(status)) {
+            throw new Exception(status);
+        } 
+
+        this->redirect("/whitelist?blacklist=true");
+    }
+
+    public function delete(string path)
+    {
+        var data, status;
+        let data = this->db->get(
+            "SELECT * FROM whitelist WHERE id=:id",
+            [
+                "id": str_replace("/whitelist/delete/", "", path)
+            ]
+        );
+
+        if (empty(data)) {
+            throw new Exception("Entry not found");
+        }
+
+        let status = this->db->execute("DELETE FROM whitelist WHERE id=:id", ["id": data->id]);
+        if (!is_bool(status)) {
+            throw new Exception(status);
+        } 
+        this->redirect("/whitelist?deleted=true");
     }
 
     public function edit(string path)
     {
         var html, data;
-        let html = this->pageTitle("Blacklisted IP");
+        let html = this->pageTitle("Whitelist IP");
 
         let data = this->db->get(
-            "SELECT * FROM blacklist WHERE id=:id",
+            "SELECT * FROM whitelist WHERE id=:id",
             [
-                "id": str_replace("/blacklist/edit/", "", path)
+                "id": str_replace("/whitelist/edit/", "", path)
             ]
         );
 
@@ -98,9 +142,9 @@ class Blacklist extends Controller
         </table>";
 
         let html .= "<div class='page-toolbar'>
-            <a href='/blacklist' class='round icon icon-back' title='Back to list'>&nbsp;</a>
-            <a href='/blacklist/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
-            <a href='/blacklist/whitelist/" . data->id . "' class='round icon icon-whitelist align-right' title='Whitelist the entry'>&nbsp;</a>
+            <a href='/whitelist' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='/whitelist/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
+            <a href='/whitelist/blacklist/" . data->id . "' class='round icon icon-blacklist align-right' title='Blacklist the entry'>&nbsp;</a>
         </div>";
 
         return html;
@@ -109,15 +153,15 @@ class Blacklist extends Controller
     public function index(string path)
     {
         var html, data;
-        let html = this->pageTitle("Blacklisted IPs");
+        let html = this->pageTitle("Whitelist IPs");
 
         if (isset(_GET["deleted"])) {
-            let html .= this->info("Entry deleted and will be removed from blacklist");
-        } elseif (isset(_GET["whitelist"])) {
-            let html .= this->info("Entry has been marked for whitelisting");
+            let html .= this->info("Entry deleted and will be removed from whitelist");
+        } elseif (isset(_GET["blacklist"])) {
+            let html .= this->info("Entry has been marked for blacklisting");
         }
         
-        let data = this->db->all("SELECT * FROM blacklist");
+        let data = this->db->all("SELECT * FROM whitelist");
         if (count(data)) {
             let html .= "<table class='table wfull'>
                 <thead>
@@ -136,60 +180,16 @@ class Blacklist extends Controller
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
                     <td>
-                        <a href='/blacklist/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
-                        <a href='/blacklist/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
-                        <a href='/blacklist/whitelist/" . item->id . "' class='mini icon icon-whitelist' title='Whitelist the entry'>&nbsp;</a>
+                        <a href='/whitelist/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='/whitelist/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
+                        <a href='/whitelist/blacklist/" . item->id . "' class='mini icon icon-blacklist' title='Blacklist the entry'>&nbsp;</a>
                     </td>
                 </tr>";
             }
             let html .= "</tbody></table>";
         } else {
-            let html .= "<h2><span>Nothing blacklisted yet</span></h2>";
+            let html .= "<h2><span>Nothing whitelisted yet</span></h2>";
         }
         return html;
-    }
-
-    public function whitelist(string path)
-    {
-        var data, status;
-        let data = this->db->get(
-            "SELECT * FROM blacklist WHERE id=:id",
-            [
-                "id": str_replace("/blacklist/delete/", "", path)
-            ]
-        );
-
-        if (empty(data)) {
-            throw new Exception("Entry not found");
-        }
-
-        let status = this->db->execute("DELETE FROM blacklist WHERE id=:id", ["id": data->id]);
-        if (!is_bool(status)) {
-            throw new Exception(status);
-        } 
-        
-        let status = this->db->execute(
-            "INSERT OR REPLACE INTO whitelist
-                (id, 'ip', 'country', 'whois', 'service') 
-            VALUES 
-                (
-                    (SELECT id FROM whitelist WHERE ip=:ip),
-                    :ip,
-                    :country,
-                    :whois,
-                    :service
-                )",
-            [
-                "ip": data->ip,
-                "country": data->country,
-                "service": data->service,
-                "whois": data->whois
-            ]
-        );
-        if (!is_bool(status)) {
-            throw new Exception(status);
-        } 
-
-        this->redirect("/blacklist?whitelist=true");
     }
 }

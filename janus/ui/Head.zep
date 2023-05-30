@@ -43,7 +43,7 @@ class Head
         :root {
             /* Body */
             --body-background-colour: #92ddd6;
-            --body-text-colour: #030202;
+            --body-text-colour: #221E1F;
         
             /* Box */
             --box-background-colour: #fff;
@@ -52,27 +52,28 @@ class Head
             --box-deleted-background-colour: #8B8B8B;
             --box-disabled-background-colour: #c2c2c2;
             --box-warning-background-colour: #F08966;
-            --box-border-colour: #030202;
-            --box-title-background-colour: #00a9ff;
-            --box-title-border-colour: #030202;
+            --box-border-colour: #221E1F;
+            --box-title-background-colour: #FDEA00;
+            --box-title-border-colour: #221E1F;
             --box-shadow: rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px;
         
             /* Buttons */
-            --button-background-colour: #00a9ff;
+            --button-background-colour: #FDEA00;
             --button-background-colour-disabled: #c9c9c9;
-            --button-hover-background-colour: #6dcbf9;
-            --button-border-colour: #030202;
-            --button-svg-fill-colour: #030202;
-            --button-text-colour: #030202;
+            --button-hover-background-colour: #D49045;
+            --button-border-colour: #221E1F;
+            --button-svg-fill-colour: #221E1F;
+            --button-text-colour: #221E1F;
             --button-shadow: rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px;
         
             /* Inputs */
-            --input-border-colour: #030202;
+            --input-border-colour: #221E1F;
             --input-border-focus-colour: #00a9ff;
         
             /* Text */
-            --text-heading-background-colour: #fff;
-            --text-heading-border-colour: #030202;
+            --text-heading-background-colour: #FDEA00;
+            --text-heading-colour: #221E1F;
+            --text-heading-border-colour: #221E1F;
             --text-heading-shadow: rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px;
             --text-required-colour: #fca8a4;
             --text-disabled: #a2a2a2;
@@ -82,6 +83,7 @@ class Head
         /* Fonts */
         html, body {
             color: var(--body-text-colour);
+            background-color: #D4813F;
             font-family: Helvetica, sans-serif;
             height: 100vh;
             width: 100%;
@@ -96,6 +98,10 @@ class Head
             align-items: flex-start;
             width:100%;
             overflow-x: hidden;
+            background-image: url('/assets/janus-bk.jpg');
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-size: 100% auto;
         }
         a, a:hover, a:visited {
             color: var(--body-text-colour);
@@ -118,15 +124,18 @@ class Head
             flex-direction: column;
         }
 
+        pre {
+            white-space: pre-wrap;       /* Since CSS 2.1 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }        
+
         /* Inputs */
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            flex: 100%;
-            margin-bottom: 30px;
-        }
         input, textarea, select {
             padding: 10px;
+            width: calc(100% - 20px);
         }
         input:focus, textarea:focus, select:focus {
             border:1px solid var(--input-border-focus-colour);
@@ -225,6 +234,9 @@ class Head
             margin-top: 20px;
             width: 60px;
         }
+        .float-right {
+            float: right !important;
+        }
         .mini {
             display: block;
             cursor: pointer;
@@ -250,6 +262,9 @@ class Head
         }
         .page-toolbar .round {
             margin-right: 20px;
+        }
+        .page-toolbar .align-right {
+            margin-left: auto;
         }
 
         /* Box */
@@ -277,7 +292,7 @@ class Head
             column-gap: 20px;
         }
         .box-body {
-            padding: 40px 40px;
+            padding: 20px 20px;
         }
         .box-footer {
             padding: 0 40px 40px 40px;
@@ -313,6 +328,12 @@ class Head
         .table tr .total {
             background-color: var(--box-title-background-colour);
             text-align: right;
+        }
+        .table .buttons {
+            text-align: right;
+        }
+        .table .buttons .mini {
+            float: right !important;
         }
         .box-title img {
             width: 80px;
@@ -372,6 +393,14 @@ class Head
             font-family: Helvetica, sans-serif;
             font-size: 22pt;
             margin: 20px 0 50px 0;
+        }
+        h1 span, h2 span {
+            color: var(--text-heading-colour);
+            background-color: var(--text-heading-background-colour);
+            border: 3px solid var(--text-heading-border-colour);
+            margin: 0;
+            padding: 20px 20px 10px 20px;
+            box-shadow: var(--box-shadow);
         }
         .required {
             padding-top: 10px;
@@ -447,6 +476,18 @@ class Head
         .icon-patterns::before {
             background-position: -64px -64px;
         }
+        .icon-back::before {
+            background-position: -128px -64px;
+        }
+        .icon-logs::before {
+            background-position: -192px -64px;
+        }
+        .icon-add::before {
+            background-position: -256px -64px;
+        }
+        .mini.icon-add::before {
+            background-position: -165px -40px !important;
+        }
         </style>";
     }
 
@@ -458,6 +499,7 @@ class Head
             <a href='/blacklist' class='round icon icon-blacklist' title='Blacklisted IPs'>&nbsp;</a>
             <a href='/whitelist' class='round icon icon-whitelist' title='Whitelisted IPs'>&nbsp;</a>
             <a href='/patterns' class='round icon icon-patterns' title='Scan patterns'>&nbsp;</a>
+            <a href='/logs' class='round icon icon-logs' title='Browse the logs'>&nbsp;</a>
             <a href='/settings' class='round icon icon-settings' title='Settings'>&nbsp;</a>
             <a href='/logout' class='round icon icon-logout' title='Logout'>&nbsp;</a>
         </div>";

@@ -25,15 +25,17 @@
 namespace Janus;
 
 use Janus\Controllers\Blacklist;
+use Janus\Controllers\Controller;
 use Janus\Controllers\Database;
+use Janus\Controllers\Logs;
+use Janus\Controllers\Whitelist;
 use Janus\Exceptions\Exception;
 use Janus\Helpers\Captcha;
 use Janus\Ui\Head;
 
-class Janus
+class Janus extends Controller
 {
     private settings;
-    private db;
 
     public function __construct(string db)
     {
@@ -54,6 +56,8 @@ class Janus
             "/scan-warn": "scanWarn",
             "/scan": "scan",
             "/blacklist": "blacklist",
+            "/logs": "logs",
+            "/whitelist": "whitelist",
             "/the-secure-door": "login",
             "/logout": "logout"
         ];
@@ -104,90 +108,20 @@ class Janus
 
     private function dashboard(string path)
     {
-        var head;
-        let head = new Head();
-        return "<h1>Dashboard</h1>" . head->toolbar() . "        
+        return this->pageTitle("Dashboard") . "        
         <div class='row'>" .
             this->patternsUI() .            
         "</div>
-        <h2>IP summary</h2>
+        <h2><span>IP summary</span></h2>
         <div class='row'>" . 
             (this->settings->service_lookup ? this->ipServicesUI() : "") . 
             (this->settings->ip_lookup ? this->ipCountriesUI() : "") . 
         "</div>";
     }
 
-    private function error(string message = "Missing required fields")
-    {
-        return "<div class='error box wfull'>
-        <div class='box-title'>
-            <span>Error</span>
-        </div>
-        <div class='box-body'>
-            <p>" . message . "</p>
-        </div></div>";
-    }
-
     private function footer(bool logged_in = false)
     {
         echo "</main></body></html>";
-    }
-
-    private function getCountry(ip)
-    {
-        var output, splits;
-        let output = shell_exec("geoiplookup " . ip);
-        if (output) {
-            let splits = explode(":", output);
-            let splits = explode(",", splits[count(splits) - 1]);
-            unset(splits[0]);
-            return trim(implode(",", splits));
-        }
-        return null;
-    }
-
-    private function getService(ip)
-    {
-        var output, line, lines, netname = null;
-
-        let output = shell_exec("whois " . ip);
-        if (output) {
-            let lines = explode("\n", strtolower(output));
-            
-            for line in lines {
-                if(strpos(line, "orgname:") !== false) {
-                    let netname = trim(ltrim(line, "orgname:"));
-                    break;
-                }
-
-                if(strpos(line, "org-name:") !== false && !netname) {
-                    let netname = trim(ltrim(line, "org-name:"));
-                }
-
-                if(strpos(line, "netname:") !== false) {
-                    let netname = trim(ltrim(line, "netname:"));
-                }
-
-                if(strpos(line, "owner:") !== false && !netname) {
-                    let netname = trim(ltrim(line, "owner:"));
-                }
-
-                if(strpos(line, "organization name") !== false && !netname) {
-                    let netname = str_replace([":"], "", trim(ltrim(line, "organization name")));
-                }
-                
-
-                if(strpos(line, "descr:") !== false && netname) {
-                    let netname = trim(ltrim(line, "descr:"));
-                    break;
-                }
-            }
-        }
-        
-        return [
-            output,
-            (netname) ? ucwords(strtolower(netname)) : null
-        ];
     }
 
     private function head(int code = 200)
@@ -369,7 +303,7 @@ class Janus
         var html, captcha;
         let captcha = new Captcha();
 
-        let html = "<h1>Login</h1>";
+        let html = "<h1><span>Login</span></h1>";
 
         if (!empty(_POST)) {
             if (isset(_POST["login"])) {
@@ -428,6 +362,13 @@ class Janus
         let _SESSION["janus"] = null;
         session_write_close();
         this->redirect("/the-secure-door");
+    }
+
+    private function logs(string path)
+    {
+        var controller;
+        let controller = new Logs();
+        return controller->router(path, this->db);
     }
 
     private function notFound()
@@ -523,12 +464,6 @@ class Janus
                 });
             </script>
         </div></div>";
-    }
-
-    private function redirect(string url)
-    {
-        header("Location: " . url);
-        die();
     }
 
     private function scan(string path)
@@ -630,7 +565,7 @@ class Janus
             }
         }
 
-        return "<h1>Scanning logs</h1>
+        return this->pageTitle("Scanning logs") . "
             <div class='box wfull'>
             <div class='box-title'>
                 <span>Scan complete</span>
@@ -642,9 +577,7 @@ class Janus
 
     private function scanWarn(string path)
     {
-        var head;
-        let head = new Head();
-        return "<h1>Scan logs</h1> " . head->toolbar() . "
+        return this->pageTitle("Scan logs") . "
             <div class='box wfull'>
             <div class='box-title'>
                 <span>Scan the logs</span>
@@ -669,5 +602,12 @@ class Janus
             let iLoop = iLoop + 1;
         }
         return true;
+    }
+
+    private function whitelist(string path)
+    {
+        var controller;
+        let controller = new Whitelist();
+        return controller->router(path, this->db);
     }
 }

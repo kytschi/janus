@@ -52,12 +52,97 @@ class Controller
         </div>";
     }
 
+    public function error(string message = "Missing required fields")
+    {
+        return "<div class='error box wfull'>
+        <div class='box-title'>
+            <span>Error</span>
+        </div>
+        <div class='box-body'>
+            <p>" . message . "</p>
+        </div></div>";
+    }
+
+    public function getCountry(ip)
+    {
+        var output, splits;
+        let output = shell_exec("geoiplookup " . ip);
+        if (output) {
+            let splits = explode(":", output);
+            let splits = explode(",", splits[count(splits) - 1]);
+            unset(splits[0]);
+            return trim(implode(",", splits));
+        }
+        return null;
+    }
+
+    public function getService(ip)
+    {
+        var output, line, lines, netname = null;
+
+        let output = shell_exec("whois " . ip);
+        if (output) {
+            let lines = explode("\n", strtolower(output));
+            
+            for line in lines {
+                if(strpos(line, "orgname:") !== false) {
+                    let netname = trim(ltrim(line, "orgname:"));
+                    break;
+                }
+
+                if(strpos(line, "org-name:") !== false && !netname) {
+                    let netname = trim(ltrim(line, "org-name:"));
+                }
+
+                if(strpos(line, "netname:") !== false) {
+                    let netname = trim(ltrim(line, "netname:"));
+                }
+
+                if(strpos(line, "owner:") !== false && !netname) {
+                    let netname = trim(ltrim(line, "owner:"));
+                }
+
+                if(strpos(line, "organization name") !== false && !netname) {
+                    let netname = str_replace([":"], "", trim(ltrim(line, "organization name")));
+                }
+                
+
+                if(strpos(line, "descr:") !== false && netname) {
+                    let netname = trim(ltrim(line, "descr:"));
+                    break;
+                }
+            }
+        }
+        
+        return [
+            output,
+            (netname) ? ucwords(strtolower(netname)) : null
+        ];
+    }
+
+    public function info(string message)
+    {
+        return "<div class='info box wfull'>
+            <div class='box-title'>
+                <span>Info</span>
+            </div>
+            <div class='box-body'>
+                <p>" . message . "</p>
+            </div></div>";
+    }
+
     public function pageTitle(string title)
     {
         var head;
         let head = new Head();
 
-        return "<h1>" . title . "</h1>" . head->toolbar();
+        return "<h1><span>" . title . "</span></h1>" . head->toolbar();
+    }
+
+    public function redirect(string url)
+    {
+        header("Location: " . url);
+        die();
     }
 
     public function router(string path, database)
