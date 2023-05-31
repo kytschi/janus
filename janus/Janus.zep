@@ -38,16 +38,22 @@ use Janus\Ui\Head;
 
 class Janus extends Controller
 {
-    private settings;
-
-    public function __construct(string db)
+    public function __construct(string db, bool cron = false)
     {
         if (!file_exists(db)) {
             throw new Exception("SQLite DB not found");
         }
 
         let this->db = new Database(db);
-        let this->settings = this->db->get("SELECT * FROM settings LIMIT 1");
+        var settings;
+        let settings = this->db->get("SELECT * FROM settings LIMIT 1");
+        let settings->db_file = db;
+        let this->settings = settings;
+
+        if (cron) {
+            this->writeCronFiles(cron);
+            return;
+        }
         
         if (session_status() === 1) {
             session_name("janus");
@@ -597,6 +603,8 @@ class Janus extends Controller
                 }
             }
         }
+
+        this->writeCronFiles();
 
         return this->pageTitle("Scanning logs") . "
         <div class='row'>

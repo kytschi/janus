@@ -39,22 +39,43 @@ class Settings extends Controller
         let html = this->pageTitle("Settings");
 
         if (isset(_POST["save"])) {
-            let status = this->db->execute(
-                "UPDATE 
-                    settings
-                SET 
-                    ip_lookup=:ip_lookup,
-                    service_lookup=:service_lookup",
-                [
-                    "ip_lookup": isset(_POST["ip_lookup"]) ? 1 : 0,
-                    "service_lookup": isset(_POST["service_lookup"]) ? 1 : 0
-                ]
-            );
+            if (!this->validate(
+                    _POST,
+                    [
+                        "firewall_command",
+                        "cron_folder",
+                        "firewall_cfg_folder",
+                        "firewall_cfg_file_v4"
+                    ]
+                )
+            ) {
+                let html .= this->error();
+            } else {
+                let status = this->db->execute(
+                    "UPDATE 
+                        settings
+                    SET 
+                        ip_lookup=:ip_lookup,
+                        service_lookup=:service_lookup,
+                        firewall_command=:firewall_command,
+                        firewall_cfg_folder=:firewall_cfg_folder,
+                        firewall_cfg_file_v4=:firewall_cfg_file_v4,
+                        cron_folder=:cron_folder",
+                    [
+                        "ip_lookup": isset(_POST["ip_lookup"]) ? 1 : 0,
+                        "service_lookup": isset(_POST["service_lookup"]) ? 1 : 0,
+                        "firewall_command": _POST["firewall_command"],
+                        "firewall_cfg_folder": rtrim(_POST["firewall_cfg_folder"], "/") . "/",
+                        "firewall_cfg_file_v4": _POST["firewall_cfg_file_v4"],
+                        "cron_folder": _POST["cron_folder"]
+                    ]
+                );
 
-            if (!is_bool(status)) {
-                throw new Exception(status);
+                if (!is_bool(status)) {
+                    throw new Exception(status);
+                }
+                let html .= this->info("Settings updated");
             }
-            let html .= this->info("Settings updated");
         }
         
         let data = this->db->get("SELECT * FROM settings LIMIT 1");
@@ -91,6 +112,42 @@ class Settings extends Controller
                                     </span>
                                 </label>
                             </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>CRON output folder<span class='required'>*</span></th>
+                        <td>
+                            <input 
+                                name='cron_folder'
+                                type='text'
+                                value='" . (isset(_POST["cron_folder"]) ? _POST["cron_folder"] : data->cron_folder) . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Firewall command<span class='required'>*</span></th>
+                        <td>
+                            <input 
+                                name='firewall_command'
+                                type='text'
+                                value='" . (isset(_POST["firewall_command"]) ? _POST["firewall_command"] : data->firewall_command) . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Firewall cfg folder<span class='required'>*</span></th>
+                        <td>
+                            <input 
+                                name='firewall_cfg_folder'
+                                type='text'
+                                value='" . (isset(_POST["firewall_cfg_folder"]) ? _POST["firewall_cfg_folder"] : data->firewall_cfg_folder) . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Firewall cfg file for IPv4<span class='required'>*</span></th>
+                        <td>
+                            <input 
+                                name='firewall_cfg_file_v4'
+                                type='text'
+                                value='" . (isset(_POST["firewall_cfg_file_v4"]) ? _POST["firewall_cfg_file_v4"] : data->firewall_cfg_file_v4) . "'>
                         </td>
                     </tr>
                 </tbody>

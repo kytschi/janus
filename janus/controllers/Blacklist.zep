@@ -54,6 +54,8 @@ class Blacklist extends Controller
         if (!is_bool(status)) {
             throw new Exception(status);
         } 
+        
+        this->writeCronFiles();
         this->redirect("/blacklist?deleted=true");
     }
 
@@ -191,7 +193,9 @@ class Blacklist extends Controller
         );
         if (!is_bool(status)) {
             throw new Exception(status);
-        } 
+        }
+
+        this->writeCronFiles();
 
         this->redirect("/blacklist?whitelist=true");
     }

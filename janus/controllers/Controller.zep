@@ -24,6 +24,7 @@
 */
 namespace Janus\Controllers;
 
+use Janus\Exceptions\Exception;
 use Janus\Ui\Head;
 
 class Controller
@@ -154,5 +155,81 @@ class Controller
             let iLoop = iLoop + 1;
         }
         return true;
+    }
+
+    public function writeCronFiles(bool write_files = false)
+    {
+        if (write_files) {
+            var data, item, file;
+
+            // Write the blacklist IPs for CRON.
+            let data = this->db->all("SELECT * FROM blacklist");
+            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklist", "w");
+            if (!file) {
+                throw new Exception("Failed to write blacklist file for CRON");
+            }
+            for item in data {
+                fwrite(file, item->ip. "\n");
+            }
+            fclose(file);
+
+            // Write the whitelist IPs for CRON.
+            let data = this->db->all("SELECT * FROM whitelist");
+            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/whitelist", "w");
+            if (!file) {
+                throw new Exception("Failed to write whitelist file for CRON");
+            }
+            for item in data {
+                fwrite(file, item->ip . "\n");
+            }
+            fclose(file);
+            return;
+        }
+
+        // Write the cron.
+        file_put_contents(
+            rtrim(this->settings->cron_folder, "/") . "/cron.sh",
+            "#!/bin/bash
+# DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
+
+php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', true);\";
+
+DIR=$(dirname -- \"$0\";)
+IPTABLES=" . this->settings->firewall_command . "
+IP_BLACKLIST=$DIR/blacklist
+IP_WHITELIST=$DIR/whitelist
+CONF=" . this->settings->firewall_cfg_folder . this->settings->firewall_cfg_file_v4 . "
+            
+# Create the chain JANUS_BLACKLIST
+$IPTABLES -N JANUS_BLACKLIST
+            
+# Empty the chain JANUS_BLACKLIST before adding rules
+$IPTABLES -F JANUS_BLACKLIST
+            
+# Read $IP_BLACKLIST and add IP into IPTables one by one
+/bin/egrep -v \"^#|^$|:\" $IP_BLACKLIST | sort | uniq | while read IP
+do
+    $IPTABLES -A JANUS_BLACKLIST -s $IP -j DROP
+done
+
+# Create the chain JANUS_WHITELIST
+$IPTABLES -N JANUS_WHITELIST
+            
+# Empty the chain JANUS_WHITELIST before adding rules
+$IPTABLES -F JANUS_WHITELIST
+            
+# Read $IP_WHITELIST and add IP into IPTables one by one
+/bin/egrep -v \"^#|^$|:\" $IP_WHITELIST | sort | uniq | while read IP
+do
+    $IPTABLES -A JANUS_WHITELIST -s $IP -j DROP
+done
+            
+# Save current configuration to file
+if [ ! -d \"" . this->settings->firewall_cfg_folder . "\" ]
+then
+    mkdir " . this->settings->firewall_cfg_folder . "
+fi
+$IPTABLES-save > $CONF"
+        );
     }
 }

@@ -86,6 +86,7 @@ class Whitelist extends Controller
                 }
                 unset(_POST["ip"]);
                 let html .= this->info("Entry created");
+                this->writeCronFiles();
             }
         }
 
@@ -157,6 +158,7 @@ class Whitelist extends Controller
             throw new Exception(status);
         } 
 
+        this->writeCronFiles();
         this->redirect("/whitelist?blacklist=true");
     }
 
@@ -177,7 +179,9 @@ class Whitelist extends Controller
         let status = this->db->execute("DELETE FROM whitelist WHERE id=:id", ["id": data->id]);
         if (!is_bool(status)) {
             throw new Exception(status);
-        } 
+        }
+
+        this->writeCronFiles();
         this->redirect("/whitelist?deleted=true");
     }
 

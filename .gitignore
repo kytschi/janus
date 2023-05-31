@@ -6,3 +6,4 @@ ui.php
 janus.json
 composer.lock
 vendor*
+cron/*
