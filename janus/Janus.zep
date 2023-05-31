@@ -28,6 +28,9 @@ use Janus\Controllers\Blacklist;
 use Janus\Controllers\Controller;
 use Janus\Controllers\Database;
 use Janus\Controllers\Logs;
+use Janus\Controllers\Patterns;
+use Janus\Controllers\Settings;
+use Janus\Controllers\Users;
 use Janus\Controllers\Whitelist;
 use Janus\Exceptions\Exception;
 use Janus\Helpers\Captcha;
@@ -53,13 +56,16 @@ class Janus extends Controller
 
         var routes = [
             "/dashboard": "dashboard",
+            "/blacklist": "blacklist",
+            "/logout": "logout",
+            "/logs": "logs",
+            "/patterns": "patterns",
+            "/the-secure-door": "login",
             "/scan-warn": "scanWarn",
             "/scan": "scan",
-            "/blacklist": "blacklist",
-            "/logs": "logs",
-            "/whitelist": "whitelist",
-            "/the-secure-door": "login",
-            "/logout": "logout"
+            "/settings": "settings",
+            "/users": "users",
+            "/whitelist": "whitelist"
         ];
 
         var code = 200, path, parsed, output = "", route, func, logged_in = false;
@@ -103,7 +109,7 @@ class Janus extends Controller
     {
         var controller;
         let controller = new Blacklist();
-        return controller->router(path, this->db);
+        return controller->router(path, this->db, this->settings);
     }
 
     private function dashboard(string path)
@@ -144,7 +150,7 @@ class Janus extends Controller
     {
         var height = 200, labels = [], totals = [], colours = [], data;
 
-        let data = this->db->all("SELECT COUNT(id) AS total, country FROM blacklist GROUP BY country ORDER BY total");
+        let data = this->db->all("SELECT COUNT(id) AS total, country FROM blacklist GROUP BY country ORDER BY total DESC");
         if (!empty(data)) {
             var item;
             for item in data {
@@ -223,12 +229,12 @@ class Janus extends Controller
     {
         var height = 200, labels = [], totals = [], colours = [], data;
 
-        let data = this->db->all("SELECT COUNT(id) AS total, service FROM blacklist GROUP BY service ORDER BY total");
+        let data = this->db->all("SELECT COUNT(id) AS total, service FROM blacklist GROUP BY service ORDER BY total DESC");
         if (!empty(data)) {
             var item;
             for item in data {
                 let labels[] = "\"" . item->service . "\"";
-                let totals[] = item->total;
+                let totals[] = intval(item->total);
                 let colours[] = "\"#" . substr(md5(item->service), 3, 6) . "\"";
             }
 
@@ -337,22 +343,38 @@ class Janus extends Controller
             }
         }
 
-        let html .= "<form method='post'><div id='login' class='box'>
-            <div class='box-body'>
-                <div class='input-group'>
-                    <span>username<span class='required'>*</span></span>
-                    <input type='text' name='u' placeholder='what is your username?'>
-                </div>
-                <div class='input-group'>
-                    <span>password<span class='required'>*</span></span>
-                    <input type='password' name='p' placeholder='your secret password please'>
-                </div>
-                <div class='input-group'><span>captcha<span class='required'>*</span></span>" . captcha->draw() . "</div>
-            </div>
-            <div class='box-footer'>
-                <button type='submit' name='login'>login</button>
-            </div>
-        </div></form>";
+        let html .= "
+        <form method='post'>        
+            <table id='login' class='table wfull'>
+                <tbody>
+                    <tr>
+                        <th>Username<span class='required'>*</span></th>
+                        <td>
+                            <input type='text' name='u' placeholder='what is your username?'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Password<span class='required'>*</span></th>
+                        <td>
+                            <input type='password' name='p' placeholder='your secret password please'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class='text-top'>Captcha<span class='required'>*</span></th>
+                        <td>
+                            " . captcha->draw() . "
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan='2'>
+                            <button type='submit' name='login' class='float-right'>login</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>";
 
         return html;
     }
@@ -368,7 +390,7 @@ class Janus extends Controller
     {
         var controller;
         let controller = new Logs();
-        return controller->router(path, this->db);
+        return controller->router(path, this->db, this->settings);
     }
 
     private function notFound()
@@ -387,17 +409,24 @@ class Janus extends Controller
             </div>";
     }
 
+    private function patterns(string path)
+    {
+        var controller;
+        let controller = new Patterns();
+        return controller->router(path, this->db, this->settings);
+    }
+
     private function patternsUI()
     {
         var height = 200, labels = [], totals = [], colours = [], data;
 
-        let data = this->db->all("SELECT * FROM found_block_patterns");
+        let data = this->db->all("SELECT COUNT(id) AS total, category FROM found_block_patterns GROUP BY category ORDER BY total DESC");
         if (!empty(data)) {
             var item;
             for item in data {
-                let labels[] = "\"" . item->label . "\"";
-                let totals[] = item->total;
-                let colours[] = "\"#" . substr(md5(item->label), 3, 6) . "\"";
+                let labels[] = "\"" . item->category . "\"";
+                let totals[] = intval(item->total);
+                let colours[] = "\"#" . substr(md5(item->category), 3, 6) . "\"";
             }
 
             let height = count(data) * 30;
@@ -504,18 +533,6 @@ class Janus extends Controller
                             continue;
                         }
 
-                        this->db->execute(
-                            "INSERT OR REPLACE INTO found_block_patterns
-                                (id, 'total', 'label') 
-                            VALUES 
-                                (
-                                    (SELECT id FROM found_block_patterns WHERE label=:label),
-                                    (SELECT IFNULL(total, 1) AS TOTAL FROM found_block_patterns WHERE label=:label) + 1,
-                                    :label
-                                )",
-                            ["label": pattern->label]
-                        );
-
                         if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
                             //Always ignore localhost.
                             if (matches[0] == "127.0.0.1") {
@@ -525,6 +542,22 @@ class Janus extends Controller
                             if (!empty(data)) {
                                 break;
                             }
+
+                            this->db->execute(
+                                "INSERT INTO found_block_patterns
+                                    ('ip', 'label', 'category') 
+                                VALUES 
+                                    (
+                                        :ip,
+                                        :label,
+                                        :category
+                                    )",
+                                [
+                                    "ip": matches[0],
+                                    "label": pattern->label,
+                                    "category": pattern->category
+                                ]
+                            );
 
                             let country = "UNKNOWN";
                             if (this->settings->ip_lookup) {
@@ -566,48 +599,57 @@ class Janus extends Controller
         }
 
         return this->pageTitle("Scanning logs") . "
-            <div class='box wfull'>
-            <div class='box-title'>
-                <span>Scan complete</span>
+        <div class='row'>
+            <div class='box'>
+                <div class='box-title'>
+                    <span>Scan complete</span>
+                </div>
+                <div class='box-body'>
+                    <p>All done</p>
+                </div>
+                <div class='box-footer'>
+                    <a href='/dashboard' class='button'>Back to dashboard</a>
+                </div>
             </div>
-            <div class='box-body'>
-                <a href='/dashboard' class='button'>Back to dashboard</a>
-            </div></div>";
+        </div>";
     }
 
     private function scanWarn(string path)
     {
         return this->pageTitle("Scan logs") . "
-            <div class='box wfull'>
-            <div class='box-title'>
-                <span>Scan the logs</span>
+        <div class='row'>
+            <div class='box'>
+                <div class='box-title'>
+                    <span>Scan the logs</span>
+                </div>
+                <div class='box-body'>
+                    <p>Scanning can take sometime</p>
+                </div>
+                <div class='box-footer'>
+                    <a href='/scan' class='button float-right'>Go</a>
+                </div>
             </div>
-            <div class='box-body'>
-                <p>Scanning can take sometime</p>
-                <a href='/scan' class='button'>Go</a>
-            </div></div>";
+        </div>";
     }
 
-    private function validate(array data, array checks)
+    private function settings(string path)
     {
-        var iLoop = 0;
-        while (iLoop < count(checks)) {
-            if (!isset(data[checks[iLoop]])) {
-                return false;
-            }
-            
-            if (empty(data[checks[iLoop]])) {
-                return false;
-            }
-            let iLoop = iLoop + 1;
-        }
-        return true;
+        var controller;
+        let controller = new Settings();
+        return controller->router(path, this->db, this->settings);
+    }
+
+    private function users(string path)
+    {
+        var controller;
+        let controller = new Users();
+        return controller->router(path, this->db, this->settings);
     }
 
     private function whitelist(string path)
     {
         var controller;
         let controller = new Whitelist();
-        return controller->router(path, this->db);
+        return controller->router(path, this->db, this->settings);
     }
 }

@@ -31,6 +31,7 @@ class Logs extends Controller
 {
     public routes = [
         "/logs/add": "add",
+        "/logs/delete/": "delete",
         "/logs/edit/": "edit",
         "/logs": "index"
     ];
@@ -79,6 +80,27 @@ class Logs extends Controller
         </div>";        
 
         return html;
+    }
+
+    public function delete(string path)
+    {
+        var data, status;
+        let data = this->db->get(
+            "SELECT * FROM logs WHERE id=:id",
+            [
+                "id": str_replace("/logs/delete/", "", path)
+            ]
+        );
+
+        if (empty(data)) {
+            throw new Exception("Entry not found");
+        }
+
+        let status = this->db->execute("DELETE FROM logs WHERE id=:id", ["id": data->id]);
+        if (!is_bool(status)) {
+            throw new Exception(status);
+        } 
+        this->redirect("/logs?deleted=true");
     }
 
     public function edit(string path)
@@ -169,7 +191,9 @@ class Logs extends Controller
                     }
                     let html .= "<tr>
                         <td><pre>" . line . "</pre></td>
-                        <td>&nbsp;</td>
+                        <td>
+                            <a href='/patterns/add?log=" . data->id . "&line=" . iLoop . "' class='mini icon icon-add'>&nbsp;</a>
+                        </td>
                     </tr>";
                 }
             }
@@ -216,7 +240,9 @@ class Logs extends Controller
             }
             let html .= "</tbody></table>";
         } else {
-            let html .= "<h2><span>No logs defined to watch yet</span></h2>";
+            let html .= "
+                <h2><span>No logs defined to watch yet</span></h2>
+                <p><a href='/logs/add' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }

@@ -58,7 +58,7 @@ class Head
             --box-shadow: rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px;
         
             /* Buttons */
-            --button-background-colour: #FDEA00;
+            --button-background-colour: #63B0CA;
             --button-background-colour-disabled: #c9c9c9;
             --button-hover-background-colour: #D49045;
             --button-border-colour: #221E1F;
@@ -68,14 +68,14 @@ class Head
         
             /* Inputs */
             --input-border-colour: #221E1F;
-            --input-border-focus-colour: #00a9ff;
+            --input-border-focus-colour: #D49045;
         
             /* Text */
             --text-heading-background-colour: #FDEA00;
             --text-heading-colour: #221E1F;
             --text-heading-border-colour: #221E1F;
             --text-heading-shadow: rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px;
-            --text-required-colour: #fca8a4;
+            --text-required-colour: #221E1F;
             --text-disabled: #a2a2a2;
             --text-deleted: #f44f46;
         }
@@ -194,18 +194,18 @@ class Head
         }
 
         /* Buttons */
-        button, .button-blank  {
+        button, .button-blank, .button  {
             color: var(--button-text-colour);
             font-family: Helvetica, sans-serif;
-        }
-        button, .button-blank, .button {
-            padding: 10px 40px;
-        }
-        .button, button, .button-blank {
+            font-weight: bold;
+            font-size: 14pt;
+            text-transform: capitalize;
             background-color: var(--button-background-colour);
             border: 3px solid var(--button-border-colour);
             cursor: pointer;
             text-decoration: none;
+            line-height: 20px;
+            padding: 20px 20px 10px 20px;
         }
         .button-blank {
             background: none !important;
@@ -226,7 +226,7 @@ class Head
             vertical-align: middle;
             padding: 0 !important;
             font-size: 0pt !important;
-            background-color: var(--button-background-colour);
+            background-color: var(--text-heading-background-colour);
             border: 3px solid var(--button-border-colour);
             cursor: pointer;
         }
@@ -406,6 +406,9 @@ class Head
             padding-top: 10px;
             color: var(--text-required-colour);
         }
+        .text-top {
+            vertical-align: top;
+        }
 
         /* Sizes */
         .wfull {
@@ -466,6 +469,9 @@ class Head
         }
         .icon-blacklist::before {
             background-position: -576px 0px;
+        }
+        .mini.icon-blacklist::before {
+            background-position: -360px 0px !important;
         }
         .icon-whitelist::before {
             background-position: 0px -64px;

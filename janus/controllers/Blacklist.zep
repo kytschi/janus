@@ -32,7 +32,7 @@ class Blacklist extends Controller
     public routes = [
         "/blacklist/delete/": "delete",
         "/blacklist/edit/": "edit",
-        "/blacklist/whitelist/": "whitelist",
+        "/blacklist/white/": "whitelist",
         "/blacklist": "index"
     ];
 
@@ -95,12 +95,11 @@ class Blacklist extends Controller
                     <td colspan='2'><pre>" . data->whois . "</pre></td>
                 </tr>
             </tbody>
-        </table>";
-
-        let html .= "<div class='page-toolbar'>
+        </table>
+        <div class='page-toolbar'>
             <a href='/blacklist' class='round icon icon-back' title='Back to list'>&nbsp;</a>
             <a href='/blacklist/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
-            <a href='/blacklist/whitelist/" . data->id . "' class='round icon icon-whitelist align-right' title='Whitelist the entry'>&nbsp;</a>
+            <a href='/blacklist/white/" . data->id . "' class='round icon icon-whitelist align-right' title='Whitelist the entry'>&nbsp;</a>
         </div>";
 
         return html;
@@ -125,7 +124,9 @@ class Blacklist extends Controller
                         <th width='200px'>IP</th>
                         <th>Country</th>
                         <th>Service</th>
-                        <th width='160px'>&nbsp;</th>
+                        <th class='buttons' width='140px'>
+                            <a href='/blacklist/add' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>";
@@ -135,16 +136,18 @@ class Blacklist extends Controller
                     <td>" . item->ip . "</td>
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
-                    <td>
+                    <td class='buttons'>
                         <a href='/blacklist/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='/blacklist/white/" . item->id . "' class='mini icon icon-whitelist' title='Whitelist the entry'>&nbsp;</a>
                         <a href='/blacklist/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
-                        <a href='/blacklist/whitelist/" . item->id . "' class='mini icon icon-whitelist' title='Whitelist the entry'>&nbsp;</a>
                     </td>
                 </tr>";
             }
             let html .= "</tbody></table>";
         } else {
-            let html .= "<h2><span>Nothing blacklisted yet</span></h2>";
+            let html .= "
+                <h2><span>Nothing blacklisted yet</span></h2>
+                <p><a href='/blacklist/add' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }
@@ -155,7 +158,7 @@ class Blacklist extends Controller
         let data = this->db->get(
             "SELECT * FROM blacklist WHERE id=:id",
             [
-                "id": str_replace("/blacklist/delete/", "", path)
+                "id": str_replace("/blacklist/white/", "", path)
             ]
         );
 

@@ -43,7 +43,7 @@ class Exception extends \Exception
      */
     public function __toString()
     {
-        var html, head;
+        var head;
         let head = new Head();
 
         if (headers_sent()) {
@@ -58,19 +58,25 @@ class Exception extends \Exception
             header("HTTP/1.1 500 Internal Server Error");
         }
 
-        let html = "<!DOCTYPE html><html lang='en'>" . head->build() . "<body id='error' class='error'><div class='background-image'></div><main>";
-        let html .= "<h1>Error</h1>";
-        let html .= "<div class='box'>
-            <div class='box-body'>
-                <p>" . this->getMessage() . "</p>
-            </div>
-            <div class='box-footer'>
-                <a href='/dashboard' class='button'>back to dashboard</a>
-            </div>
-        </div>";
-        let html .= "</main></body></html>";
-
-        return html;
+        return "
+        <!DOCTYPE html>
+        <html lang='en'>" . head->build() . "
+            <body>
+                <main>
+                    <div id='error' class='box'>
+                        <div class='box-title'>
+                            <span>Error</span>
+                        </div>
+                        <div class='box-body'>
+                            <p>" . this->getMessage() . "</p>
+                        </div>
+                        <div class='box-footer'>
+                            <a href='/dashboard' class='button'>back to dashboard</a>
+                        </div>
+                    </div>
+                </main>
+            </body>
+        </html>";
     }
 
     /**

@@ -30,27 +30,7 @@ class Controller
 {
     public db;
     public routes = [];
-
-    public function createInputText(
-            string label,
-            string var_name,
-            string placeholder,
-            bool required = false,
-            value = null
-    ) {
-        if (empty(value)) {
-            let value = (isset(_POST[var_name]) ? _POST[var_name] : "");
-        }
-
-        return "<div class='input-group'>
-            <span>" . label . (required ? "<span class='required'>*</span>" : "") . "</span>
-            <input
-                type='text'
-                name='" . var_name . "' 
-                placeholder='' " . 
-                "value=\"" . value . "\"'>
-        </div>";
-    }
+    public settings;
 
     public function error(string message = "Missing required fields")
     {
@@ -73,7 +53,7 @@ class Controller
             unset(splits[0]);
             return trim(implode(",", splits));
         }
-        return null;
+        return "UNKNOWN";
     }
 
     public function getService(ip)
@@ -116,7 +96,7 @@ class Controller
         
         return [
             output,
-            (netname) ? ucwords(strtolower(netname)) : null
+            (netname) ? ucwords(strtolower(netname)) : "UNKNOWN"
         ];
     }
 
@@ -145,17 +125,34 @@ class Controller
         die();
     }
 
-    public function router(string path, database)
+    public function router(string path, database, settings)
     {
         var route, func;
 
         for route, func in this->routes {
             if (strpos(path, route) !== false) {
                 let this->db = database;
+                let this->settings = settings;
                 return this->{func}(path);
             }
         }
 
         return "";
+    }
+
+    public function validate(array data, array checks)
+    {
+        var iLoop = 0;
+        while (iLoop < count(checks)) {
+            if (!isset(data[checks[iLoop]])) {
+                return false;
+            }
+            
+            if (empty(data[checks[iLoop]])) {
+                return false;
+            }
+            let iLoop = iLoop + 1;
+        }
+        return true;
     }
 }
