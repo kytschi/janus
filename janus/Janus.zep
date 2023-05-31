@@ -51,7 +51,7 @@ class Janus extends Controller
         let this->settings = settings;
 
         if (cron) {
-            this->writeCronFiles(cron);
+            this->scan("/scan", cron);
             return;
         }
         
@@ -501,7 +501,7 @@ class Janus extends Controller
         </div></div>";
     }
 
-    private function scan(string path)
+    private function scan(string path, bool cron = false)
     {
         var folder, dir, logs, log, lines, line, pattern, patterns = [],
             matches, db_logs, data, country, service, whois;
@@ -604,8 +604,8 @@ class Janus extends Controller
             }
         }
 
-        this->writeCronFiles();
-
+        this->writeCronFiles(cron);
+        
         return this->pageTitle("Scanning logs") . "
         <div class='row'>
             <div class='box'>
