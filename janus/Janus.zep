@@ -76,7 +76,7 @@ class Janus extends Controller
             "/whitelist": "whitelist"
         ];
 
-        var code = 200, path, parsed, output = "", route, func, logged_in = false;
+        var code = 404, path, parsed, output = "", route, func, logged_in = false;
 
         let parsed = parse_url(_SERVER["REQUEST_URI"]);
         let path = "/" . trim(parsed["path"], "/");
@@ -94,6 +94,7 @@ class Janus extends Controller
             let path = "/the-secure-door";
         } else {
             let logged_in = true;
+            let code = 200;
         }
 
         for route, func in routes {
@@ -145,6 +146,8 @@ class Janus extends Controller
 
         if (code == 404) {
             header("HTTP/1.1 404 Not Found");
+        } elseif (code == 403) {
+            header("HTTP/1.1 403 Forbidden");
         }
 
         echo "<!DOCTYPE html>
@@ -556,7 +559,7 @@ class Janus extends Controller
                     }
                     
                     for pattern in patterns {
-                        if (strpos(line, pattern->pattern) === false) {
+                        if (strpos(strtolower(line), strtolower(pattern->pattern)) === false) {
                             continue;
                         }
 
