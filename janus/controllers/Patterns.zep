@@ -33,6 +33,8 @@ class Patterns extends Controller
         "/patterns/add": "add",
         "/patterns/delete/": "delete",
         "/patterns/edit/": "edit",
+        "/patterns/export": "export",
+        "/patterns/import": "import",
         "/patterns": "index"
     ];
 
@@ -249,6 +251,73 @@ class Patterns extends Controller
         return html;
     }
 
+    public function export(string path)
+    {
+        var item, data, iLoop = 0;
+        let data = this->db->all("SELECT * FROM block_patterns ORDER BY pattern");
+        if (empty(data)) {
+            throw new Exception("No patterns to export");
+        }
+        
+        header("Content-Type: application/sql");
+        header("Content-Disposition: attachment; filename=janus_" . date("Y_m_d_H_i_s") . ".jim");
+        echo "INSERT OR REPLACE INTO block_patterns (id, 'pattern', 'label', 'category') VALUES";
+        for iLoop, item in data {
+            echo "\n((SELECT id FROM block_patterns WHERE pattern='" . item->pattern . "'), '" . item->pattern . "', '" . item->label . "', '" . item->category . "')";
+            if (iLoop < count(data) - 1) {
+                echo ",";
+            }
+        }
+        echo ";";
+        die();
+    }
+
+    public function import(string path)
+    {
+        var data, status, html = "";
+
+        let html = this->pageTitle("Importing patterns");
+        if (isset(_POST["save"])) {
+            if (!this->validate(_FILES, ["file"])) {
+                let html .= this->error();
+            } else {
+                let data = file_get_contents(_FILES["file"]["tmp_name"]);
+                let status = this->db->execute(data);
+
+                if (!is_bool(status)) {
+                    throw new Exception(status);
+                }
+                let html .= this->info("Import successful");
+            }
+        }
+        
+        let html .= "
+        <form method='POST' enctype='multipart/form-data'>
+            <table class='table wfull'>
+                <tbody>
+                    <tr>
+                        <th>File<span class='required'>*</span></th>
+                        <td>
+                            <input name='file' type='file' accept='.jim'>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan='2'>
+                            <button type='submit' name='save' value='save' class='float-right'>import</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>
+        <div class='page-toolbar'>
+            <a href='/patterns' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+        </div>";
+
+        return html;
+    }
+
     public function index(string path)
     {
         var html, data;
@@ -284,7 +353,11 @@ class Patterns extends Controller
                     </td>
                 </tr>";
             }
-            let html .= "</tbody></table>";
+            let html .= "</tbody></table>
+            <div class='page-toolbar'>
+                <a href='/patterns/export' class='round icon icon-export' title='Export Janus patterns'>&nbsp;</a>
+                <a href='/patterns/import' class='round icon icon-import' title='Import Janus patterns'>&nbsp;</a>
+            </div>";
         } else {
             let html .= "
                 <h2><span>No patterns yet</span></h2>

@@ -497,6 +497,12 @@ class Head
         .mini.icon-add::before {
             background-position: -165px -40px !important;
         }
+        .icon-export::before {
+            background-position: -320px -64px;
+        }
+        .icon-import::before {
+            background-position: -384px -64px;
+        }
         </style>";
     }
 

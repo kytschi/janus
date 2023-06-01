@@ -94,7 +94,7 @@ class Blacklist extends Controller
                     <th colspan='2'>Whois</th>
                 </tr>
                 <tr>
-                    <td colspan='2'><pre class='log-output'>" . data->whois . "</pre></td>
+                    <td colspan='2' class='log-output'>" . data->whois . "</td>
                 </tr>
             </tbody>
         </table>

@@ -220,7 +220,7 @@ class Whitelist extends Controller
                     <th colspan='2'>Whois</th>
                 </tr>
                 <tr>
-                    <td colspan='2'><pre>" . data->whois . "</pre></td>
+                    <td colspan='2' class='log-output'>" . data->whois . "</td>
                 </tr>
             </tbody>
         </table>
