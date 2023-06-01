@@ -216,7 +216,7 @@ class Logs extends Controller
             let html .= this->info("Entry deleted");
         }
         
-        let data = this->db->all("SELECT * FROM logs");
+        let data = this->db->all("SELECT * FROM logs ORDER BY log");
         if (count(data)) {
             let html .= "<table class='table wfull'>
                 <thead>

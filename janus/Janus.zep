@@ -572,15 +572,17 @@ class Janus extends Controller
 
                             this->db->execute(
                                 "INSERT INTO found_block_patterns
-                                    ('ip', 'label', 'category') 
+                                    ('ip', 'pattern', 'label', 'category') 
                                 VALUES 
                                     (
                                         :ip,
+                                        :pattern,
                                         :label,
                                         :category
                                     )",
                                 [
                                     "ip": matches[0],
+                                    "pattern": pattern->pattern,
                                     "label": pattern->label,
                                     "category": pattern->category
                                 ]

@@ -94,7 +94,7 @@ class Blacklist extends Controller
                     <th colspan='2'>Whois</th>
                 </tr>
                 <tr>
-                    <td colspan='2'><pre>" . data->whois . "</pre></td>
+                    <td colspan='2'><pre class='log-output'>" . data->whois . "</pre></td>
                 </tr>
             </tbody>
         </table>
@@ -102,7 +102,39 @@ class Blacklist extends Controller
             <a href='/blacklist' class='round icon icon-back' title='Back to list'>&nbsp;</a>
             <a href='/blacklist/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
             <a href='/blacklist/white/" . data->id . "' class='round icon icon-whitelist align-right' title='Whitelist the entry'>&nbsp;</a>
-        </div>";
+        </div>
+        <h2><span>Matching patterns</span></h2>";
+
+        let data = this->db->all(
+            "SELECT * FROM found_block_patterns WHERE ip=:ip ORDER BY label",
+            [
+                "ip": data->ip
+            ]
+        );
+        if (count(data)) {
+            let html .= "<table class='table wfull'>
+                <thead>
+                    <tr>
+                        <th>Pattern</th>
+                        <th width='200px'>Label</th>
+                        <th width='200px'>Category</th>
+                    </tr>
+                </thead>
+                <tbody>";
+            var item;
+            for item in data {
+                let html .= "<tr>
+                    <td>" . item->pattern . "</td>
+                    <td>" . item->label . "</td>
+                    <td>" . item->category . "</td>
+                </tr>";
+            }
+            let html .= "</tbody></table>";
+        } else {
+            let html .= "
+                <h2><span>No patterns yet</span></h2>
+                <p><a href='/patterns/add' class='round icon icon-add'>&nbsp;</a></p>";
+        }
 
         return html;
     }

@@ -258,7 +258,7 @@ class Patterns extends Controller
             let html .= this->info("Entry deleted");
         }
         
-        let data = this->db->all("SELECT * FROM block_patterns");
+        let data = this->db->all("SELECT * FROM block_patterns ORDER BY pattern");
         if (count(data)) {
             let html .= "<table class='table wfull'>
                 <thead>

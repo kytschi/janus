@@ -185,11 +185,14 @@ class Controller
             fclose(file);
             return;
         }
+        
+        var err;
 
-        // Write the cron.
-        file_put_contents(
-            rtrim(this->settings->cron_folder, "/") . "/cron.sh",
-            "#!/bin/bash
+        try {
+            // Write the cron.
+            file_put_contents(
+                rtrim(this->settings->cron_folder, "/") . "/cron.sh",
+                "#!/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
 
 php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', true);\";
@@ -231,5 +234,8 @@ then
 fi
 $IPTABLES-save > $CONF"
         );
+        } catch \Exception, err {
+            throw new Exception("Failed to write the cron.sh, " . err->getMessage());
+        }
     }
 }
