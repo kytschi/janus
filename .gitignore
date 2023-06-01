@@ -2,8 +2,7 @@
 ext
 compile-errors.log
 compile.log
-ui.php
-janus.json
 composer.lock
 vendor*
 cron/*
+janus.db
