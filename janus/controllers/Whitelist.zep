@@ -111,7 +111,7 @@ class Whitelist extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/whitelist' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/whitelist") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
         </div>";
 
         return html;
@@ -123,7 +123,7 @@ class Whitelist extends Controller
         let data = this->db->get(
             "SELECT * FROM whitelist WHERE id=:id",
             [
-                "id": str_replace("/whitelist/black/", "", path)
+                "id": this->cleanUrl(path, "/blacklist/black/")
             ]
         );
 
@@ -159,7 +159,7 @@ class Whitelist extends Controller
         } 
 
         this->writeCronFiles();
-        this->redirect("/whitelist?blacklist=true");
+        this->redirect(this->urlAddKey("/whitelist?blacklist=true"));
     }
 
     public function delete(string path)
@@ -168,7 +168,7 @@ class Whitelist extends Controller
         let data = this->db->get(
             "SELECT * FROM whitelist WHERE id=:id",
             [
-                "id": str_replace("/whitelist/delete/", "", path)
+                "id": this->cleanUrl(path, "/blacklist/delete/")
             ]
         );
 
@@ -182,7 +182,7 @@ class Whitelist extends Controller
         }
 
         this->writeCronFiles();
-        this->redirect("/whitelist?deleted=true");
+        this->redirect(this->urlAddKey("/whitelist?deleted=true"));
     }
 
     public function edit(string path)
@@ -193,7 +193,7 @@ class Whitelist extends Controller
         let data = this->db->get(
             "SELECT * FROM whitelist WHERE id=:id",
             [
-                "id": str_replace("/whitelist/edit/", "", path)
+                "id": this->cleanUrl(path, "/whitelist/edit/")
             ]
         );
 
@@ -225,9 +225,9 @@ class Whitelist extends Controller
             </tbody>
         </table>
         <div class='page-toolbar'>
-            <a href='/whitelist' class='round icon icon-back' title='Back to list'>&nbsp;</a>
-            <a href='/whitelist/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
-            <a href='/whitelist/black/" . data->id . "' class='round icon icon-blacklist align-right' title='Blacklist the entry'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/whitelist") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/whitelist/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/whitelist/black/" . data->id) . "' class='round icon icon-blacklist align-right' title='Blacklist the entry'>&nbsp;</a>
         </div>";
 
         return html;
@@ -253,7 +253,7 @@ class Whitelist extends Controller
                         <th>Country</th>
                         <th>Service</th>
                         <th class='buttons' width='140px'>
-                            <a href='/whitelist/add' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
+                            <a href='" . this->urlAddKey("/whitelist/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
                     </tr>
                 </thead>
@@ -265,16 +265,16 @@ class Whitelist extends Controller
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
                     <td class='buttons'>
-                        <a href='/whitelist/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
-                        <a href='/whitelist/black/" . item->id . "' class='mini icon icon-blacklist' title='Blacklist the entry'>&nbsp;</a>
-                        <a href='/whitelist/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/whitelist/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/whitelist/black/" . item->id) . "' class='mini icon icon-blacklist' title='Blacklist the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/whitelist/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
                 </tr>";
             }
             let html .= "</tbody></table>";
         } else {
             let html .= "<h2><span>Nothing whitelisted yet</span></h2>
-                <p><a href='/whitelist/add' class='round icon icon-add'>&nbsp;</a></p>";
+                <p><a href='" . this->urlAddKey("/whitelist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }

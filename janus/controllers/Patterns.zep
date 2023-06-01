@@ -142,7 +142,7 @@ class Patterns extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/patterns' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/patterns") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
         </div>";
 
         return html;
@@ -154,7 +154,7 @@ class Patterns extends Controller
         let data = this->db->get(
             "SELECT * FROM block_patterns WHERE id=:id",
             [
-                "id": str_replace("/patterns/delete/", "", path)
+                "id": this->cleanUrl(path, "/patterns/delete/")
             ]
         );
 
@@ -166,7 +166,7 @@ class Patterns extends Controller
         if (!is_bool(status)) {
             throw new Exception(status);
         } 
-        this->redirect("/patterns?deleted=true");
+        this->redirect(this->urlAddKey("/patterns?deleted=true"));
     }
 
     public function edit(string path)
@@ -177,7 +177,7 @@ class Patterns extends Controller
         let data = this->db->get(
             "SELECT * FROM block_patterns WHERE id=:id",
             [
-                "id": str_replace("/patterns/edit/", "", path)
+                "id": this->cleanUrl(path, "/patterns/edit/")
             ]
         );
 
@@ -244,8 +244,8 @@ class Patterns extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/patterns' class='round icon icon-back' title='Back to list'>&nbsp;</a>
-            <a href='/patterns/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/patterns") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/patterns/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
         </div>";
 
         return html;
@@ -312,7 +312,7 @@ class Patterns extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/patterns' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/patterns") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
         </div>";
 
         return html;
@@ -336,7 +336,7 @@ class Patterns extends Controller
                         <th width='200px'>Label</th>
                         <th width='200px'>Category</th>
                         <th class='buttons' width='120px'>
-                            <a href='/patterns/add' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
+                            <a href='" . this->urlAddKey("/patterns/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
                     </tr>
                 </thead>
@@ -348,20 +348,20 @@ class Patterns extends Controller
                     <td>" . item->label . "</td>
                     <td>" . item->category . "</td>
                     <td class='buttons'>
-                        <a href='/patterns/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
-                        <a href='/patterns/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/patterns/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/patterns/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
                 </tr>";
             }
             let html .= "</tbody></table>
             <div class='page-toolbar'>
-                <a href='/patterns/export' class='round icon icon-export' title='Export Janus patterns'>&nbsp;</a>
-                <a href='/patterns/import' class='round icon icon-import' title='Import Janus patterns'>&nbsp;</a>
+                <a href='" . this->urlAddKey("/patterns/export") . "' class='round icon icon-export' title='Export Janus patterns'>&nbsp;</a>
+                <a href='" . this->urlAddKey("/patterns/import") . "' class='round icon icon-import' title='Import Janus patterns'>&nbsp;</a>
             </div>";
         } else {
             let html .= "
                 <h2><span>No patterns yet</span></h2>
-                <p><a href='/patterns/add' class='round icon icon-add'>&nbsp;</a></p>";
+                <p><a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }

@@ -38,16 +38,22 @@ use Janus\Ui\Head;
 
 class Janus extends Controller
 {
-    public function __construct(string db, bool cron = false)
+    public function __construct(string db, string url_key = "", bool cron = false)
     {
         if (!file_exists(db)) {
             throw new Exception("SQLite DB not found");
         }
 
+        if (!file_exists(url_key)) {
+            throw new Exception("Invalid key");
+        }
+
         let this->db = new Database(db);
+
         var settings;
         let settings = this->db->get("SELECT * FROM settings LIMIT 1");
         let settings->db_file = db;
+        let settings->url_key = trim(file_get_contents(url_key), "\n");
         let this->settings = settings;
 
         if (cron) {
@@ -55,6 +61,11 @@ class Janus extends Controller
                 this->scan("/scan", cron);
             }
             return;
+        }
+
+        if (strpos(_SERVER["REQUEST_URI"], this->settings->url_key) === false) {
+            header("HTTP/1.1 404 Not Found");
+            die();
         }
         
         if (session_status() === 1) {
@@ -81,24 +92,24 @@ class Janus extends Controller
         let parsed = parse_url(_SERVER["REQUEST_URI"]);
         let path = "/" . trim(parsed["path"], "/");
 
-        if (path == "/") {
-            let path = "/dashboard";
+        if (path == this->urlAddKey("")) {
+            let path = this->urlAddKey("/dashboard");
         }
 
         if (!isset(_SESSION["janus"])) {
-            let path = "/the-secure-door";
+            let path = this->urlAddKey("/the-secure-door");
             let _SESSION["janus"] = null;
         }
 
         if (empty(_SESSION["janus"])) {
-            let path = "/the-secure-door";
+            let path = this->urlAddKey("/the-secure-door");
         } else {
             let logged_in = true;
             let code = 200;
         }
 
         for route, func in routes {
-            if (strpos(path, route) !== false) {
+            if (strpos(path, this->urlAddKey(route)) !== false) {
                 let output = this->{func}(path);
                 break;
             }
@@ -123,8 +134,43 @@ class Janus extends Controller
 
     private function dashboard(string path)
     {
-        return this->pageTitle("Dashboard") . "        
-        <div class='row'>" .
+        var data, html;
+        let html = this->pageTitle("Dashboard") . "
+        <div class='row'>
+            <div>
+                <table class='table'>
+                    <tbody>
+                        <tr>
+                            <th>Blacklisted</th>
+                            <td>";
+            let data = this->db->get("SELECT COUNT(id) AS total FROM blacklist");
+            let html .= (data) ? data->total : 0;
+            let html .= "</td>
+                        </tr>
+                        <tr>
+                            <th>Whitelisted</th>
+                            <td>";
+            let data = this->db->get("SELECT COUNT(id) AS total FROM whitelist");
+            let html .= (data) ? data->total : 0;
+            let html .= "</td>
+                        </tr>
+                        <tr>
+                            <th>Block patterns</th>
+                            <td>";
+            let data = this->db->get("SELECT COUNT(id) AS total FROM block_patterns");
+            let html .= (data) ? data->total : 0;
+            let html .= "</td>
+                        </tr>
+                        <tr>
+                            <th>Found block patterns</th>
+                            <td>";
+            let data = this->db->get("SELECT COUNT(id) AS total FROM found_block_patterns");
+            let html .= (data) ? data->total : 0;
+            let html .= "</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>" .
             this->patternsUI() .            
         "</div>
         <h2><span>IP summary</span></h2>
@@ -132,6 +178,8 @@ class Janus extends Controller
             (this->settings->service_lookup ? this->ipServicesUI() : "") . 
             (this->settings->ip_lookup ? this->ipCountriesUI() : "") . 
         "</div>";
+
+        return html;
     }
 
     private function footer(bool logged_in = false)
@@ -142,7 +190,7 @@ class Janus extends Controller
     private function head(int code = 200)
     {
         var head;
-        let head = new Head();
+        let head = new Head(this->settings);
 
         if (code == 404) {
             header("HTTP/1.1 404 Not Found");
@@ -341,7 +389,7 @@ class Janus extends Controller
                         if (!empty(user)) {
                             if (password_verify(_POST["p"], user->password)) {
                                 let _SESSION["janus"] = md5(time());
-                                this->redirect("/dashboard");
+                                this->redirect(this->urlAddKey("/dashboard"));
                             }
                         }
                         
@@ -394,7 +442,7 @@ class Janus extends Controller
     {
         let _SESSION["janus"] = null;
         session_write_close();
-        this->redirect("/the-secure-door");
+        this->redirect(this->urlAddKey("/the-secure-door"));
     }
 
     private function logs(string path)

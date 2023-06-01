@@ -76,7 +76,7 @@ class Logs extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/logs' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/logs") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
         </div>";        
 
         return html;
@@ -88,7 +88,7 @@ class Logs extends Controller
         let data = this->db->get(
             "SELECT * FROM logs WHERE id=:id",
             [
-                "id": str_replace("/logs/delete/", "", path)
+                "id": this->cleanUrl(path, "/logs/delete/")
             ]
         );
 
@@ -100,7 +100,7 @@ class Logs extends Controller
         if (!is_bool(status)) {
             throw new Exception(status);
         } 
-        this->redirect("/logs?deleted=true");
+        this->redirect(this->urlAddKey("/logs?deleted=true"));
     }
 
     public function edit(string path)
@@ -111,7 +111,7 @@ class Logs extends Controller
         let data = this->db->get(
             "SELECT * FROM logs WHERE id=:id",
             [
-                "id": str_replace("/logs/edit/", "", path)
+                "id": this->cleanUrl(path, "/logs/edit/")
             ]
         );
 
@@ -157,8 +157,8 @@ class Logs extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/logs' class='round icon icon-back' title='Back to list'>&nbsp;</a>
-            <a href='/logs/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/logs") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/logs/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
         </div>";
 
         var dir, logs, log, line, lines, iLoop=0;
@@ -192,7 +192,7 @@ class Logs extends Controller
                     let html .= "<tr>
                         <td class='log-output'>" . line . "</td>
                         <td>
-                            <a href='/patterns/add?log=" . data->id . "&line=" . iLoop . "' class='mini icon icon-add'>&nbsp;</a>
+                            <a href='" . this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) . "' class='mini icon icon-add'>&nbsp;</a>
                         </td>
                     </tr>";
                 }
@@ -223,7 +223,7 @@ class Logs extends Controller
                     <tr>
                         <th>Log</th>
                         <th class='buttons' width='120px'>
-                            <a href='/logs/add' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
+                            <a href='" . this->urlAddKey("/logs/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
                     </tr>
                 </thead>
@@ -233,8 +233,8 @@ class Logs extends Controller
                 let html .= "<tr>
                     <td>" . item->log . "</td>
                     <td class='buttons'>
-                        <a href='/logs/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
-                        <a href='/logs/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/logs/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/logs/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
                 </tr>";
             }
@@ -242,7 +242,7 @@ class Logs extends Controller
         } else {
             let html .= "
                 <h2><span>No logs defined to watch yet</span></h2>
-                <p><a href='/logs/add' class='round icon icon-add'>&nbsp;</a></p>";
+                <p><a href='" . this->urlAddKey("/logs/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }

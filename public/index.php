@@ -26,7 +26,7 @@ use Janus\Janus;
 use Janus\Exceptions\Exception;
 
 try {
-    new Janus('../janus.db');
+    new Janus('../janus.db', '../janus.key');
 } catch (\Exception $err) {
-    (new Exception($err->getMessage()))->fatal();
+    (new Exception($err->getMessage()))->fatal('../janus.key');
 }

@@ -24,8 +24,17 @@
 */
 namespace Janus\Ui;
 
-class Head
+use Janus\Controllers\Controller;
+
+class Head extends Controller
 {
+    public function __construct(settings = null)
+    {
+        if (settings) {
+            let this->settings = settings;
+        }
+    }
+
     public function build()
     {
         return "
@@ -509,14 +518,14 @@ class Head
     public function toolbar()
     {
         return "<div class='page-toolbar'>
-            <a href='/dashboard' class='round icon icon-dashboard' title='Dashboard'>&nbsp;</a>
-            <a href='/scan-warn' class='round icon icon-scan' title='Scan the logs'>&nbsp;</a>
-            <a href='/blacklist' class='round icon icon-blacklist' title='Blacklisted IPs'>&nbsp;</a>
-            <a href='/whitelist' class='round icon icon-whitelist' title='Whitelisted IPs'>&nbsp;</a>
-            <a href='/patterns' class='round icon icon-patterns' title='Scan patterns'>&nbsp;</a>
-            <a href='/logs' class='round icon icon-logs' title='Browse the logs'>&nbsp;</a>
-            <a href='/settings' class='round icon icon-settings' title='Settings'>&nbsp;</a>
-            <a href='/logout' class='round icon icon-logout' title='Logout'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/") . "' class='round icon icon-dashboard' title='Dashboard'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/scan-warn") . "' class='round icon icon-scan' title='Scan the logs'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/blacklist") . "' class='round icon icon-blacklist' title='Blacklisted IPs'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/whitelist") . "' class='round icon icon-whitelist' title='Whitelisted IPs'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/patterns") . "' class='round icon icon-patterns' title='Scan patterns'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/logs") . "' class='round icon icon-logs' title='Browse the logs'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/settings") . "' class='round icon icon-settings' title='Settings'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/logout") . "' class='round icon icon-logout' title='Logout'>&nbsp;</a>
         </div>";
     }
 }

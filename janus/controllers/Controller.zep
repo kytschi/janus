@@ -33,6 +33,15 @@ class Controller
     public routes = [];
     public settings;
 
+    public function cleanUrl(string path, string clean)
+    {
+        return str_replace(
+            "/" . (this->settings ? this->settings->url_key : "") . clean,
+            "",
+            path
+        );
+    }
+
     public function error(string message = "Missing required fields")
     {
         return "<div class='error box wfull'>
@@ -52,7 +61,8 @@ class Controller
             let splits = explode(":", output);
             let splits = explode(",", splits[count(splits) - 1]);
             unset(splits[0]);
-            return trim(implode(",", splits));
+            let output = trim(implode(",", splits));
+            return (output) ? output : "UNKNOWN";
         }
         return "UNKNOWN";
     }
@@ -115,7 +125,7 @@ class Controller
     public function pageTitle(string title)
     {
         var head;
-        let head = new Head();
+        let head = new Head(this->settings);
 
         return "<h1><span>" . title . "</span></h1>" . head->toolbar();
     }
@@ -130,15 +140,21 @@ class Controller
     {
         var route, func;
 
+        let this->db = database;
+        let this->settings = settings;
+
         for route, func in this->routes {
-            if (strpos(path, route) !== false) {
-                let this->db = database;
-                let this->settings = settings;
+            if (strpos(path, this->urlAddKey(route)) !== false) {
                 return this->{func}(path);
             }
         }
 
         return "";
+    }
+
+    public function urlAddKey(string path)
+    {
+        return "/" . (this->settings ? this->settings->url_key : "") . path;
     }
 
     public function validate(array data, array checks)
@@ -195,7 +211,7 @@ class Controller
                 "#!/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
 
-php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', true);\";
+php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '', true);\";
 
 DIR=$(dirname -- \"$0\";)
 IPTABLES=" . this->settings->firewall_command . "

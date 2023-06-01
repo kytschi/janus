@@ -42,7 +42,7 @@ class Blacklist extends Controller
         let data = this->db->get(
             "SELECT * FROM blacklist WHERE id=:id",
             [
-                "id": str_replace("/blacklist/delete/", "", path)
+                "id": this->cleanUrl(path, "/blacklist/delete/")
             ]
         );
 
@@ -56,7 +56,7 @@ class Blacklist extends Controller
         } 
         
         this->writeCronFiles();
-        this->redirect("/blacklist?deleted=true");
+        this->redirect(this->urlAddKey("/blacklist?deleted=true"));
     }
 
     public function edit(string path)
@@ -67,7 +67,7 @@ class Blacklist extends Controller
         let data = this->db->get(
             "SELECT * FROM blacklist WHERE id=:id",
             [
-                "id": str_replace("/blacklist/edit/", "", path)
+                "id": this->cleanUrl(path, "/blacklist/edit/")
             ]
         );
 
@@ -99,9 +99,9 @@ class Blacklist extends Controller
             </tbody>
         </table>
         <div class='page-toolbar'>
-            <a href='/blacklist' class='round icon icon-back' title='Back to list'>&nbsp;</a>
-            <a href='/blacklist/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
-            <a href='/blacklist/white/" . data->id . "' class='round icon icon-whitelist align-right' title='Whitelist the entry'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/blacklist") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/blacklist/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/blacklist/white/". data->id) . "' class='round icon icon-whitelist align-right' title='Whitelist the entry'>&nbsp;</a>
         </div>
         <h2><span>Matching patterns</span></h2>";
 
@@ -133,7 +133,7 @@ class Blacklist extends Controller
         } else {
             let html .= "
                 <h2><span>No patterns yet</span></h2>
-                <p><a href='/patterns/add' class='round icon icon-add'>&nbsp;</a></p>";
+                <p><a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
 
         return html;
@@ -159,7 +159,7 @@ class Blacklist extends Controller
                         <th>Country</th>
                         <th>Service</th>
                         <th class='buttons' width='140px'>
-                            <a href='/blacklist/add' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
+                            <a href='" . this->urlAddKey("/blacklist/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
                     </tr>
                 </thead>
@@ -171,9 +171,9 @@ class Blacklist extends Controller
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
                     <td class='buttons'>
-                        <a href='/blacklist/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
-                        <a href='/blacklist/white/" . item->id . "' class='mini icon icon-whitelist' title='Whitelist the entry'>&nbsp;</a>
-                        <a href='/blacklist/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/blacklist/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/blacklist/white/" . item->id) . "' class='mini icon icon-whitelist' title='Whitelist the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/blacklist/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
                 </tr>";
             }
@@ -181,7 +181,7 @@ class Blacklist extends Controller
         } else {
             let html .= "
                 <h2><span>Nothing blacklisted yet</span></h2>
-                <p><a href='/blacklist/add' class='round icon icon-add'>&nbsp;</a></p>";
+                <p><a href='" . this->urlAddKey("/blacklist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }
@@ -192,7 +192,7 @@ class Blacklist extends Controller
         let data = this->db->get(
             "SELECT * FROM blacklist WHERE id=:id",
             [
-                "id": str_replace("/blacklist/white/", "", path)
+                "id": this->cleanUrl(path, "/blacklist/white/")
             ]
         );
 
@@ -229,6 +229,6 @@ class Blacklist extends Controller
 
         this->writeCronFiles();
 
-        this->redirect("/blacklist?whitelist=true");
+        this->redirect(this->urlAddKey("/blacklist?whitelist=true"));
     }
 }

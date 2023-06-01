@@ -29,6 +29,7 @@ use Janus\Ui\Head;
 class Exception extends \Exception
 {
     public code;
+    private back_url = "/";
     
 	public function __construct(string message, int code = 500)
 	{
@@ -71,7 +72,7 @@ class Exception extends \Exception
                             <p>" . this->getMessage() . "</p>
                         </div>
                         <div class='box-footer'>
-                            <a href='/dashboard' class='button'>back to dashboard</a>
+                            <a href='" . this->back_url . "' class='button'>back to dashboard</a>
                         </div>
                     </div>
                 </main>
@@ -83,12 +84,12 @@ class Exception extends \Exception
      * Fatal error just lets us dumb the error out faster and kill the site
      * so we can't go any futher.
      */
-    public function fatal(string template = "", int line = 0)
+    public function fatal(string url_key = "")
     {
-        echo this;
-        if (template && line) {
-            echo "<p>&nbsp;&nbsp;<strong>Trace</strong><br/>&nbsp;&nbsp;Source <strong>" . str_replace(getcwd(), "", template) . "</strong> at line <strong>" . line . "</strong></p>";
+        if (file_exists(url_key)) {
+            let this->back_url = "/" . trim(file_get_contents(url_key), "\n");
         }
+        echo this;
         die();
     }
 }

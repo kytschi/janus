@@ -161,7 +161,7 @@ class Settings extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/users' class='round icon icon-users' title='Users'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/users") . "' class='round icon icon-users' title='Users'>&nbsp;</a>
         </div>";
 
         return html;

@@ -114,7 +114,7 @@ class Users extends Controller
         let data = this->db->get(
             "SELECT * FROM users WHERE id=:id",
             [
-                "id": str_replace("/users/delete/", "", path)
+                "id": this->cleanUrl(path, "/users/delete/")
             ]
         );
 
@@ -126,7 +126,7 @@ class Users extends Controller
         if (!is_bool(status)) {
             throw new Exception(status);
         } 
-        this->redirect("/users?deleted=true");
+        this->redirect(this->urlAddKey("/users?deleted=true"));
     }
 
     public function edit(string path)
@@ -137,7 +137,7 @@ class Users extends Controller
         let data = this->db->get(
             "SELECT * FROM users WHERE id=:id",
             [
-                "id": str_replace("/users/edit/", "", path)
+                "id": this->cleanUrl(path, "/users/edit/")
             ]
         );
 
@@ -216,8 +216,8 @@ class Users extends Controller
             </table>
         </form>
         <div class='page-toolbar'>
-            <a href='/users' class='round icon icon-back' title='Back to list'>&nbsp;</a>
-            <a href='/users/delete/" . data->id . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/users") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+            <a href='" . this->urlAddKey("/users/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
         </div>";
 
         return html;
@@ -239,7 +239,7 @@ class Users extends Controller
                     <tr>
                         <th>User</th>
                         <th class='buttons' width='140px'>
-                            <a href='/users/add' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
+                            <a href='" . this->urlAddKey("/users/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
                     </tr>
                 </thead>
@@ -249,8 +249,8 @@ class Users extends Controller
                 let html .= "<tr>
                     <td>" . item->name . "</td>
                     <td class='buttons'>
-                        <a href='/users/edit/" . item->id . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
-                        <a href='/users/delete/" . item->id . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/users/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/users/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
                 </tr>";
             }
@@ -258,7 +258,7 @@ class Users extends Controller
         } else {
             let html .= "
                 <h2><span>Nothing blacklisted yet</span></h2>
-                <p><a href='/users/add' class='round icon icon-add'>&nbsp;</a></p>";
+                <p><a href='" . this->urlAddKey("/users/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }
