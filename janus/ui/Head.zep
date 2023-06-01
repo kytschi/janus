@@ -124,12 +124,15 @@ class Head
             flex-direction: column;
         }
 
-        pre {
-            white-space: pre-wrap;       /* Since CSS 2.1 */
-            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-            white-space: -pre-wrap;      /* Opera 4-6 */
-            white-space: -o-pre-wrap;    /* Opera 7 */
-            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        .log-output {
+            white-space: -moz-pre-wrap; /* Mozilla */
+            white-space: -hp-pre-wrap; /* HP printers */
+            white-space: -o-pre-wrap; /* Opera 7 */
+            white-space: -pre-wrap; /* Opera 4-6 */
+            white-space: pre-wrap; /* CSS 2.1 */
+            white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
+            word-wrap: break-word; /* IE */
+            word-break: break-all;
         }        
 
         /* Inputs */

@@ -190,7 +190,7 @@ class Logs extends Controller
                         continue;
                     }
                     let html .= "<tr>
-                        <td><pre>" . line . "</pre></td>
+                        <td class='log-output'>" . line . "</td>
                         <td>
                             <a href='/patterns/add?log=" . data->id . "&line=" . iLoop . "' class='mini icon icon-add'>&nbsp;</a>
                         </td>
