@@ -51,7 +51,9 @@ class Janus extends Controller
         let this->settings = settings;
 
         if (cron) {
-            this->scan("/scan", cron);
+            if (!this->settings->cron_running) {
+                this->scan("/scan", cron);
+            }
             return;
         }
         
@@ -503,6 +505,25 @@ class Janus extends Controller
 
     private function scan(string path, bool cron = false)
     {
+        if (this->settings->cron_running) {
+            return this->pageTitle("Scanning logs") . "
+            <div class='row'>
+                <div class='box'>
+                    <div class='box-title'>
+                        <span>Scan running</span>
+                    </div>
+                    <div class='box-body'>
+                        <p>The scan is already running please wait for it to finish before trying again</p>
+                    </div>
+                    <div class='box-footer'>
+                        <a href='/dashboard' class='button'>Back to dashboard</a>
+                    </div>
+                </div>
+            </div>";
+        }
+
+        this->db->execute("UPDATE settings SET cron_running=1");
+
         var folder, dir, logs, log, lines, line, pattern, patterns = [],
             matches, db_logs, data, country, service, whois;
 
@@ -605,6 +626,8 @@ class Janus extends Controller
         }
 
         this->writeCronFiles(cron);
+
+        this->db->execute("UPDATE settings SET cron_running=0");
         
         return this->pageTitle("Scanning logs") . "
         <div class='row'>
@@ -624,6 +647,23 @@ class Janus extends Controller
 
     private function scanWarn(string path)
     {
+        if (this->settings->cron_running) {
+            return this->pageTitle("Scanning logs") . "
+            <div class='row'>
+                <div class='box'>
+                    <div class='box-title'>
+                        <span>Scan running</span>
+                    </div>
+                    <div class='box-body'>
+                        <p>The scan is already running please wait for it to finish before trying again</p>
+                    </div>
+                    <div class='box-footer'>
+                        <a href='/dashboard' class='button'>Back to dashboard</a>
+                    </div>
+                </div>
+            </div>";
+        }
+
         return this->pageTitle("Scan logs") . "
         <div class='row'>
             <div class='box'>
