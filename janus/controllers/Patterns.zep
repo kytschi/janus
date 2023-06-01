@@ -40,6 +40,7 @@ class Patterns extends Controller
     {
         var data, pattern = "", status, html = "";
 
+        let html = this->pageTitle("Adding a pattern");
         if (isset(_POST["save"])) {
             if (!this->validate(_POST, ["pattern", "label"])) {
                 let html .= this->error();
