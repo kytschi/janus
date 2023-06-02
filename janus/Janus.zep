@@ -137,8 +137,9 @@ class Janus extends Controller
     {
         var data, html;
         let html = this->pageTitle("Dashboard") . "
-        <div class='row'>
-            <div>
+        <div class='row'>" . 
+            this->patternsUI() .
+            "<div>
                 <table class='table'>
                     <tbody>
                         <tr>
@@ -156,14 +157,14 @@ class Janus extends Controller
             let html .= "</td>
                         </tr>
                         <tr>
-                            <th>Block patterns</th>
+                            <th>Available patterns</th>
                             <td>";
             let data = this->db->get("SELECT COUNT(id) AS total FROM block_patterns");
             let html .= (data) ? data->total : 0;
             let html .= "</td>
                         </tr>
                         <tr>
-                            <th>Found block patterns</th>
+                            <th>Patterns blocked</th>
                             <td>";
             let data = this->db->get("SELECT COUNT(id) AS total FROM found_block_patterns");
             let html .= (data) ? data->total : 0;
@@ -172,9 +173,8 @@ class Janus extends Controller
                     </tbody>
                 </table>
             </div>" .
-            this->patternsUI() .            
         "</div>
-        <h2><span>IP summary</span></h2>
+        <h2><span>Blacklist summary</span></h2>
         <div class='row'>" . 
             (this->settings->service_lookup ? this->ipServicesUI() : "") . 
             (this->settings->ip_lookup ? this->ipCountriesUI() : "") . 
