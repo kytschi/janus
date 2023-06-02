@@ -75,6 +75,7 @@ class Settings extends Controller
                     throw new Exception(status);
                 }
                 let html .= this->info("Settings updated");
+                this->writeCronFiles();
             }
         }
         
