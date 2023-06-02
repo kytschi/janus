@@ -214,7 +214,7 @@ class Janus extends Controller
         if (!empty(data)) {
             var item;
             for item in data {
-                let labels[] = "\"" . item->country . "\"";
+                let labels[] = "\"" . str_replace(["\""], "", item->country) . "\"";
                 let totals[] = intval(item->total);
                 let colours[] = "\"#" . substr(md5(item->country), 3, 6) . "\"";
             }
@@ -293,7 +293,7 @@ class Janus extends Controller
         if (!empty(data)) {
             var item;
             for item in data {
-                let labels[] = "\"" . item->service . "\"";
+                let labels[] = "\"" . str_replace(["\""], "", item->service) . "\"";
                 let totals[] = intval(item->total);
                 let colours[] = "\"#" . substr(md5(item->service), 3, 6) . "\"";
             }
@@ -484,7 +484,7 @@ class Janus extends Controller
         if (!empty(data)) {
             var item;
             for item in data {
-                let labels[] = "\"" . item->category . "\"";
+                let labels[] = "\"" . str_replace(["\""], "", item->category) . "\"";
                 let totals[] = intval(item->total);
                 let colours[] = "\"#" . substr(md5(item->category), 3, 6) . "\"";
             }
