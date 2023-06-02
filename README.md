@@ -28,6 +28,8 @@ extension=/var/www/janus/compiled/php8.1-janus.so
 
 Don't forget to then configure your PHP cli and FPM (if using it) to load the Janus module. Normally you'd just symlink the `janus.ini` in the `modules` folder is your under Linux.
 
+If you have problems with the pre-compiled try building it yourself either via running the `build.sh` (it'll need composer) or installing Zephir (https://zephir-lang.com/en) and building with that. The `build.sh` tries to build for all the PHPs so you may want to mod the script to build only for what you need.
+
 ### Step 3: setup the database
 In the Janus folder copy `janus.db.example` to `janus.db`. You can place this SQLite databse anywhere you like, it doesn't have to be in the Janus folder.
 
@@ -72,5 +74,8 @@ Now set yourself a `cron` up to trigger the `cron.sh` at a time that suits you. 
 Janus background - Deep Ellum Janus, by Dan Colcer (Transylvania, Romania @dcolcerart) was painted in 2016.
 
 Icons from https://icons8.com
+
+Zephir-lang for making an awesome language!
+https://zephir-lang.com/en
 
 Name the show this is named from? ;-)
