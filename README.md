@@ -8,6 +8,12 @@ Make sure to carefully build your whitelist so not to block valid services or se
 
 ![Snapshot](https://github.com/kytschi/janus/blob/main/screenshot.jpg)
 
+## Requirements
+* PHP 7.4 or 8+
+* PHP-SQLite
+* geoiplookup (OPTIONAL, only if you want to lookup the country of origin)
+* whois (OPTIONAL, only if you want to lookup the service)
+
 ## Setup
 
 ### Step 1: clone the repository
@@ -61,6 +67,8 @@ The default login is username: `janus` and password: `letmein` **CHANGE THIS!** 
 Next from the `settings` set the various folders and commands to match your server setup.
 
 The `CRON output folder` is where a cron file is generated to allow you to run a cron to trigger Janus to automatically scan. Make sure your webserver user has write permissions to the `CRON output folder` folder.
+
+**Make sure that the webserver user can read those webserver log files also.**
 
 ### Step 7: the cron
 Once you've saved your settings, Janus should have written a `cron.sh` file in the `CRON output folder`, double check that its there. If its not make sure the webserver user has permissions to write to that folder and click `save` again from the `settings`.
