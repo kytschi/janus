@@ -25,8 +25,11 @@
 use Janus\Janus;
 use Janus\Exceptions\Exception;
 
+$db = '/var/www/janus/janus.db';
+$key = '/var/www/janus/janus.key';
+
 try {
-    new Janus('/var/www/janus/janus.db', '/var/www/janus/janus.key');
+    new Janus($db, $key);
 } catch (\Exception $err) {
-    (new Exception($err->getMessage()))->fatal('/var/www/janus/janus.key');
+    (new Exception($err->getMessage()))->fatal($key);
 }
