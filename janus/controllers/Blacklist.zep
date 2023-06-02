@@ -105,7 +105,7 @@ class Blacklist extends Controller
         <h2><span>Matching patterns</span></h2>";
 
         let data = this->db->all(
-            "SELECT * FROM found_block_patterns WHERE ip=:ip ORDER BY label",
+            "SELECT * FROM found_block_patterns WHERE ip=:ip GROUP BY pattern ORDER BY label",
             [
                 "ip": data->ip
             ]
