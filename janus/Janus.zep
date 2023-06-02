@@ -41,11 +41,11 @@ class Janus extends Controller
     public function __construct(string db, string url_key = "", bool cron = false)
     {
         if (!file_exists(db)) {
-            throw new Exception("SQLite DB not found");
+            throw new Exception("SQLite DB not found", cron);
         }
 
         if (!file_exists(url_key)) {
-            throw new Exception("Invalid key");
+            throw new Exception("Invalid key", cron);
         }
 
         let this->db = new Database(db);
@@ -573,129 +573,135 @@ class Janus extends Controller
             </div>";
         }
 
-        this->db->execute("UPDATE settings SET cron_running=1");
+        var err;
 
-        var folder, dir, logs, log, lines, line, pattern, patterns = [],
-            matches, db_logs, data, country, service, whois;
+        try {
+            this->db->execute("UPDATE settings SET cron_running=1");
 
-        let patterns = this->db->all("SELECT * FROM block_patterns");
-        let db_logs = this->db->all("SELECT * FROM logs");
-        
-        for folder in db_logs {
-            let dir = shell_exec("ls " . folder->log);
-            if (empty(dir)) {
-                throw new Exception("Failed to list the logs folder");
-            }
-            let logs = explode("\n", dir);
-            if (!count(logs)) {
-                continue;
-            }
+            var folder, dir, logs, log, lines, line, pattern, patterns = [],
+                matches, db_logs, data, country, service, whois;
 
-            for log in logs {
-                if (empty(log)) {
+            let patterns = this->db->all("SELECT * FROM block_patterns");
+            let db_logs = this->db->all("SELECT * FROM logs");
+            
+            for folder in db_logs {
+                let dir = shell_exec("ls " . folder->log);
+                if (empty(dir)) {
+                    throw new Exception("Failed to list the logs folder", cron);
+                }
+                let logs = explode("\n", dir);
+                if (!count(logs)) {
                     continue;
                 }
 
-                let lines = explode("\n", file_get_contents(log));
-                if (empty(lines)) {
-                    continue;
-                }
-
-                for line in lines {
-                    if (empty(line)) {
+                for log in logs {
+                    if (empty(log)) {
                         continue;
                     }
-                    
-                    for pattern in patterns {
-                        if (strpos(strtolower(line), strtolower(pattern->pattern)) === false) {
+
+                    let lines = explode("\n", file_get_contents(log));
+                    if (empty(lines)) {
+                        continue;
+                    }
+
+                    for line in lines {
+                        if (empty(line)) {
                             continue;
                         }
-
-                        if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
-                            //Always ignore localhost.
-                            if (matches[0] == "127.0.0.1") {
-                                break;
-                            }
-                            let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
-                            if (!empty(data)) {
-                                break;
+                        
+                        for pattern in patterns {
+                            if (strpos(strtolower(line), strtolower(pattern->pattern)) === false) {
+                                continue;
                             }
 
-                            this->db->execute(
-                                "INSERT INTO found_block_patterns
-                                    ('ip', 'pattern', 'label', 'category') 
-                                VALUES 
-                                    (
-                                        :ip,
-                                        :pattern,
-                                        :label,
-                                        :category
-                                    )",
-                                [
-                                    "ip": matches[0],
-                                    "pattern": pattern->pattern,
-                                    "label": pattern->label,
-                                    "category": pattern->category
-                                ]
-                            );
-
-                            let country = "UNKNOWN";
-                            if (this->settings->ip_lookup) {
-                                let country = this->getCountry(matches[0]);
-                            }
-
-                            let service = "UNKNOWN";
-                            let whois = "UNKNOWN";
-                            if (this->settings->service_lookup) {
-                                let data = this->getService(matches[0]);
-                                let whois = data[0];
-                                if (data[1]) {
-                                    let service = data[1];
+                            if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
+                                //Always ignore localhost.
+                                if (matches[0] == "127.0.0.1") {
+                                    break;
                                 }
-                            }
+                                let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
+                                if (!empty(data)) {
+                                    break;
+                                }
 
-                            this->db->execute(
-                                "INSERT OR REPLACE INTO blacklist
-                                    (id, 'ip', 'country', 'whois', 'service') 
-                                VALUES 
-                                    (
-                                        (SELECT id FROM blacklist WHERE ip=:ip),
-                                        :ip,
-                                        :country,
-                                        :whois,
-                                        :service
-                                    )",
-                                [
-                                    "ip": matches[0],
-                                    "country": country,
-                                    "whois": whois,
-                                    "service": service
-                                ]
-                            );
+                                this->db->execute(
+                                    "INSERT INTO found_block_patterns
+                                        ('ip', 'pattern', 'label', 'category') 
+                                    VALUES 
+                                        (
+                                            :ip,
+                                            :pattern,
+                                            :label,
+                                            :category
+                                        )",
+                                    [
+                                        "ip": matches[0],
+                                        "pattern": pattern->pattern,
+                                        "label": pattern->label,
+                                        "category": pattern->category
+                                    ]
+                                );
+
+                                let country = "UNKNOWN";
+                                if (this->settings->ip_lookup) {
+                                    let country = this->getCountry(matches[0]);
+                                }
+
+                                let service = "UNKNOWN";
+                                let whois = "UNKNOWN";
+                                if (this->settings->service_lookup) {
+                                    let data = this->getService(matches[0]);
+                                    let whois = data[0];
+                                    if (data[1]) {
+                                        let service = data[1];
+                                    }
+                                }
+
+                                this->db->execute(
+                                    "INSERT OR REPLACE INTO blacklist
+                                        (id, 'ip', 'country', 'whois', 'service') 
+                                    VALUES 
+                                        (
+                                            (SELECT id FROM blacklist WHERE ip=:ip),
+                                            :ip,
+                                            :country,
+                                            :whois,
+                                            :service
+                                        )",
+                                    [
+                                        "ip": matches[0],
+                                        "country": country,
+                                        "whois": whois,
+                                        "service": service
+                                    ]
+                                );
+                            }
                         }
                     }
                 }
             }
+
+            this->writeCronFiles(cron);
+
+            this->db->execute("UPDATE settings SET cron_running=0");
+            
+            return this->pageTitle("Scanning logs") . "
+            <div class='row'>
+                <div class='box'>
+                    <div class='box-title'>
+                        <span>Scan complete</span>
+                    </div>
+                    <div class='box-body'>
+                        <p>All done</p>
+                    </div>
+                    <div class='box-footer'>
+                        <a href='/dashboard' class='button'>Back to dashboard</a>
+                    </div>
+                </div>
+            </div>";
+        } catch \Exception, err {
+            throw new Exception(err->getMessage(), cron);
         }
-
-        this->writeCronFiles(cron);
-
-        this->db->execute("UPDATE settings SET cron_running=0");
-        
-        return this->pageTitle("Scanning logs") . "
-        <div class='row'>
-            <div class='box'>
-                <div class='box-title'>
-                    <span>Scan complete</span>
-                </div>
-                <div class='box-body'>
-                    <p>All done</p>
-                </div>
-                <div class='box-footer'>
-                    <a href='/dashboard' class='button'>Back to dashboard</a>
-                </div>
-            </div>
-        </div>";
     }
 
     private function scanWarn(string path)

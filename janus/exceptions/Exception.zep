@@ -28,15 +28,16 @@ use Janus\Ui\Head;
 
 class Exception extends \Exception
 {
-    public code;
+    public code = 500;
+    private cron = false;
     private back_url = "/";
     
-	public function __construct(string message, int code = 500)
+	public function __construct(string message, bool cron = false)
 	{
         //Trigger the parent construct.
-        parent::__construct(message, code);
+        parent::__construct(message, this->code);
 
-        let this->code = code;
+        let this->cron = cron;
     }
 
     /**
@@ -44,6 +45,10 @@ class Exception extends \Exception
      */
     public function __toString()
     {
+        if (this->cron) {
+            return this->getMessage();
+        }
+        
         var head;
         let head = new Head();
 
