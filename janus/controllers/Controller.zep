@@ -211,7 +211,7 @@ class Controller
                 "#!/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
 
-php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key . "', true);\";
+php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', true);\";
 
 DIR=$(dirname -- \"$0\";)
 IPTABLES=" . this->settings->firewall_command . "

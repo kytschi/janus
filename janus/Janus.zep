@@ -53,6 +53,7 @@ class Janus extends Controller
         var settings;
         let settings = this->db->get("SELECT * FROM settings LIMIT 1");
         let settings->db_file = db;
+        let settings->url_key_file = url_key;
         let settings->url_key = trim(file_get_contents(url_key), "\n");
         let this->settings = settings;
 
