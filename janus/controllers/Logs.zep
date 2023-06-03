@@ -161,49 +161,71 @@ class Logs extends Controller
             <a href='" . this->urlAddKey("/logs/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
         </div>";
 
-        var dir, logs, log, line, lines, iLoop=0;
+        var dir, logs, log, line, lines, iLoop=0, patterns, found, pattern;
         let dir = shell_exec("ls " . data->log);
         if (!empty(dir)) {
-            let html .= "<h2><span>The log</span></h2>
-            <table class='table wfull'>
-                <thead>
-                    <tr>
-                        <th>Line</th>
-                        <th width='60px'>&nbsp;</th>
-                    </tr>
-                </thead>
-                <tbody>";
-
             let logs = explode("\n", dir);
-            for log in logs {
-                if (empty(log)) {
-                    continue;
-                }
 
-                let lines = explode("\n", file_get_contents(log));
-                if (empty(lines)) {
-                    continue;
-                }
+            if (!empty(logs)) {
+                let patterns = this->db->all("SELECT * FROM block_patterns");
 
-                for iLoop, line in lines {
-                    if (empty(line)) {
+                let html .= "<h2><span>The log</span></h2>
+                <table class='table wfull'>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th style='min-width:60px'>&nbsp;</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+
+                for log in logs {
+                    if (empty(log)) {
                         continue;
                     }
-                    let html .= "<tr>
-                        <td class='log-output'>" . line . "</td>
-                        <td>
-                            <a href='" . this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) . "' class='mini icon icon-add'>&nbsp;</a>
-                        </td>
-                    </tr>";
-                }
-            }
 
-            let html .= "</tbody></table>";
+                    let lines = explode("\n", file_get_contents(log));
+                    if (empty(lines)) {
+                        continue;
+                    }
+
+                    for iLoop, line in lines {
+                        if (empty(line)) {
+                            continue;
+                        }
+                        let html .= "<tr>
+                            <td class='log-output'>" . line . "</td>";
+
+                        let found = false;
+                        for pattern in patterns {
+                            if (strpos(strtolower(line), strtolower(pattern->pattern)) !== false) {
+                                let found = pattern;
+                                break;
+                            }
+                        }
+
+                        if (found) {
+                            let html .= "<td>
+                                <a title='Found the pattern in Janus' href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>" . found->pattern . "</a>
+                            </td>";
+                        } else {
+                            let html .= "<td>
+                                <a href='" . this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) . "' class='mini icon icon-add'>&nbsp;</a>
+                            </td>";
+                        }
+
+                        let html .= "</tr>";
+                    }
+                }
+
+                let html .= "</tbody></table>";
+            } else {
+                let html .= "<h2><span>Failed to read the log</span></h2>";
+            }
         } else {
             let html .= "<h2><span>Failed to read the log</span></h2>";
         }
-        
-
+    
         return html;
     }
 
