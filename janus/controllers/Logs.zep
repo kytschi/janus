@@ -171,12 +171,6 @@ class Logs extends Controller
 
                 let html .= "<h2><span>The log</span></h2>
                 <table class='table wfull'>
-                    <thead>
-                        <tr>
-                            <th>Line</th>
-                            <th style='min-width:60px'>&nbsp;</th>
-                        </tr>
-                    </thead>
                     <tbody>";
 
                 for log in logs {
@@ -193,8 +187,6 @@ class Logs extends Controller
                         if (empty(line)) {
                             continue;
                         }
-                        let html .= "<tr>
-                            <td class='log-output'>" . line . "</td>";
 
                         let found = false;
                         for pattern in patterns {
@@ -203,18 +195,26 @@ class Logs extends Controller
                                 break;
                             }
                         }
-
                         if (found) {
-                            let html .= "<td>
-                                <a title='Found the pattern in Janus' href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>" . found->pattern . "</a>
-                            </td>";
+                            let html .= "<tr><th>
+                                <p class='log-output'>" . line . "</p>
+                                <p><strong>
+                                    Found pattern: 
+                                    <a title='Found the pattern in Janus' href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>" . found->pattern . "</a>
+                                </strong>
+                                </p>
+                            </th></tr>";
                         } else {
-                            let html .= "<td>
-                                <a href='" . this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) . "' class='mini icon icon-add'>&nbsp;</a>
-                            </td>";
+                            let html .= "<tr>
+                                <td>
+                                    <p class='log-output'>" . line . "</p>
+                                    <a 
+                                    title='Create a pattern from line' 
+                                    href='" .this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) ."'
+                                    class='mini icon icon-add'>&nbsp;</a>
+                                </td>
+                            </tr>";
                         }
-
-                        let html .= "</tr>";
                     }
                 }
 

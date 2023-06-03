@@ -162,6 +162,7 @@ class Head extends Controller
             white-space: pre-line; /* CSS 3 (and 2.1 as well, actually) */
             word-wrap: break-word; /* IE */
             word-break: break-all;
+            font-weight: normal;
         }        
 
         /* Inputs */
