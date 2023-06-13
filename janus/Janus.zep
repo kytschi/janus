@@ -568,7 +568,7 @@ class Janus extends Controller
                         <p>The scan is already running please wait for it to finish before trying again</p>
                     </div>
                     <div class='box-footer'>
-                        <a href='/dashboard' class='button'>Back to dashboard</a>
+                        <a href='" . this->urlAddKey("/dashboard") . "' class='button'>Back to dashboard</a>
                     </div>
                 </div>
             </div>";
@@ -696,7 +696,7 @@ class Janus extends Controller
                         <p>All done</p>
                     </div>
                     <div class='box-footer'>
-                        <a href='/dashboard' class='button'>Back to dashboard</a>
+                        <a href='". this->urlAddKey("/dashboard") . "' class='button'>Back to dashboard</a>
                     </div>
                 </div>
             </div>";
@@ -718,7 +718,7 @@ class Janus extends Controller
                         <p>The scan is already running please wait for it to finish before trying again</p>
                     </div>
                     <div class='box-footer'>
-                        <a href='/dashboard' class='button'>Back to dashboard</a>
+                        <a href='". this->urlAddKey("/dashboard") . "' class='button'>Back to dashboard</a>
                     </div>
                 </div>
             </div>";
@@ -734,7 +734,7 @@ class Janus extends Controller
                     <p>Scanning can take sometime</p>
                 </div>
                 <div class='box-footer'>
-                    <a href='/scan' class='button float-right'>Go</a>
+                    <a href='". this->urlAddKey("/scan") . "' class='button float-right'>Go</a>
                 </div>
             </div>
         </div>";

@@ -239,6 +239,7 @@ class Head extends Controller
             text-decoration: none;
             line-height: 20px;
             padding: 20px 20px 10px 20px;
+            margin-left: 10px;
         }
         .button-blank {
             background: none !important;
@@ -269,6 +270,9 @@ class Head extends Controller
         }
         .float-right {
             float: right !important;
+        }
+        .float-left {
+            float: left !important;
         }
         .mini {
             display: block;
@@ -532,6 +536,26 @@ class Head extends Controller
         }
         .icon-import::before {
             background-position: -384px -64px;
+        }
+
+        #tags {
+            margin-bottom: 40px;
+        }
+        .tag {
+            float: left;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            color: var(--button-text-colour);
+            font-family: Helvetica, sans-serif;
+            font-weight: bold;
+            font-size: 14pt;
+            text-transform: capitalize;
+            background-color: var(--box-title-background-colour);
+            border: 3px solid var(--button-border-colour);
+            cursor: pointer;
+            text-decoration: none;
+            line-height: 20px;
+            padding: 20px 20px 10px 20px;
         }
         </style>";
     }

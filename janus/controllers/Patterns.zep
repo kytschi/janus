@@ -253,8 +253,19 @@ class Patterns extends Controller
 
     public function export(string path)
     {
-        var item, data, iLoop = 0;
-        let data = this->db->all("SELECT * FROM block_patterns ORDER BY pattern");
+        var item, data, iLoop = 0, query, vars = [];
+
+        let query = "SELECT * FROM block_patterns";
+        if (isset(_GET["pat"])) {
+            let query .= " WHERE pattern=:query";
+            let vars["query"] = urldecode(_GET["pat"]);
+        } elseif (isset(_GET["cat"])) {
+            let query .= " WHERE category=:query";
+            let vars["query"] = urldecode(_GET["cat"]);
+        }
+        let query .= " ORDER BY pattern";
+
+        let data = this->db->all(query, vars);
         if (empty(data)) {
             throw new Exception("No patterns to export");
         }
@@ -320,15 +331,65 @@ class Patterns extends Controller
 
     public function index(string path)
     {
-        var html, data;
+        var html, data, query, vars=[], categories, categories_query, item, filter = "";
         let html = this->pageTitle("Block patterns");
 
         if (isset(_GET["deleted"])) {
             let html .= this->info("Entry deleted");
         }
+
+        let query = "SELECT * FROM block_patterns";
+        let categories_query = "SELECT category FROM block_patterns";
+        if (isset(_POST["pattern"])) {
+            let query .= " WHERE pattern LIKE :query";
+            let categories_query .= " WHERE pattern LIKE :query";
+            let vars["query"] = "%" . _POST["pattern"] . "%";
+            let filter = "?pat=" . urlencode(_POST["pattern"]);
+        } elseif (isset(_GET["cat"])) {
+            let query .= " WHERE category = :query";
+            let categories_query .= " WHERE category = :query";
+            let vars["query"] = urldecode(_GET["cat"]);
+            let filter = "?cat=" . _GET["cat"];
+        }
+        let categories_query .= " GROUP BY category ORDER BY category";
+        let query .= " ORDER BY pattern";
         
-        let data = this->db->all("SELECT * FROM block_patterns ORDER BY pattern");
+        let categories = this->db->all(categories_query, vars);
+        let data = this->db->all(query, vars);
         if (count(data)) {
+            let html .= "
+                <form action='" . this->urlAddKey("/patterns") . "' method='post'>
+                    <table class='table wfull'>
+                        <tr>
+                            <th>Pattern<span class='required'>*</span></th>
+                            <td>
+                                <input name='pattern' type='text' value='" . (isset(_POST["pattern"]) ? _POST["pattern"]  : ""). "'>
+                            </td>
+                        </tr>
+                        <tfoot>
+                            <tr>
+                                <td colspan='2'>
+                                    <button type='submit' name='search' value='search' class='float-right'>search</button>";
+            if (isset(_POST["pattern"])) {
+                let html .= "<a href='" . this->urlAddKey("/patterns") . "' class='float-right button'>clear</a>";
+            }
+            let html .= "</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </form>";
+
+            if (categories) {
+                let html .= "<div id='tags' class='wfull'>";
+                for item in categories {
+                    let html .= "<a class='tag' href='" . this->urlAddKey("/patterns?cat=" . urlencode(item->category)) . "'>" . item->category . "</a>";
+                }
+                if (isset(_GET["cat"])) {
+                    let html .= "<a href='" . this->urlAddKey("/patterns") . "' class='float-left button'>clear filter</a>";
+                }
+                let html .= "</div>";
+            }
+
             let html .= "<table class='table wfull'>
                 <thead>
                     <tr>
@@ -340,8 +401,7 @@ class Patterns extends Controller
                         </th>
                     </tr>
                 </thead>
-                <tbody>";
-            var item;
+                <tbody>";            
             for item in data {
                 let html .= "<tr>
                     <td>" . item->pattern . "</td>
@@ -355,12 +415,12 @@ class Patterns extends Controller
             }
             let html .= "</tbody></table>
             <div class='page-toolbar'>
-                <a href='" . this->urlAddKey("/patterns/export") . "' class='round icon icon-export' title='Export Janus patterns'>&nbsp;</a>
+                <a href='" . this->urlAddKey("/patterns/export" . filter) . "' class='round icon icon-export' title='Export Janus patterns'>&nbsp;</a>
                 <a href='" . this->urlAddKey("/patterns/import") . "' class='round icon icon-import' title='Import Janus patterns'>&nbsp;</a>
             </div>";
         } else {
             let html .= "
-                <h2><span>No patterns yet</span></h2>
+                <h2><span>No patterns found</span></h2>
                 <p><a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;

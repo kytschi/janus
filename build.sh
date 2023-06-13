@@ -1,7 +1,7 @@
 #!/bin/bash
 versions=("7.4" "8.0" "8.1" "8.2")
 for version in ${versions[@]}; do
-    printf "Building for PHP $version\n"
+    printf "Building Janus for PHP $version\n"
     sudo update-alternatives --set php /usr/bin/php$version
     sudo update-alternatives --set php-config /usr/bin/php-config$version
     sudo update-alternatives --set phpize /usr/bin/phpize$version
@@ -13,3 +13,4 @@ for version in ${versions[@]}; do
     cp ext/modules/janus.so compiled/php$version-janus.so
     sudo service php$version-fpm restart
 done
+echo "Janus build complete"
