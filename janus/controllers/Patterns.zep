@@ -256,12 +256,12 @@ class Patterns extends Controller
         var item, data, iLoop = 0, query, vars = [];
 
         let query = "SELECT * FROM block_patterns";
-        if (isset(_GET["pat"])) {
+        if (isset(_GET["p"])) {
             let query .= " WHERE pattern=:query";
-            let vars["query"] = urldecode(_GET["pat"]);
-        } elseif (isset(_GET["cat"])) {
+            let vars["query"] = urldecode(_GET["p"]);
+        } elseif (isset(_GET["c"])) {
             let query .= " WHERE category=:query";
-            let vars["query"] = urldecode(_GET["cat"]);
+            let vars["query"] = urldecode(_GET["c"]);
         }
         let query .= " ORDER BY pattern";
 
@@ -340,16 +340,16 @@ class Patterns extends Controller
 
         let query = "SELECT * FROM block_patterns";
         let categories_query = "SELECT category FROM block_patterns";
-        if (isset(_POST["pattern"])) {
+        if (isset(_POST["q"])) {
             let query .= " WHERE pattern LIKE :query";
             let categories_query .= " WHERE pattern LIKE :query";
-            let vars["query"] = "%" . _POST["pattern"] . "%";
-            let filter = "?pat=" . urlencode(_POST["pattern"]);
-        } elseif (isset(_GET["cat"])) {
+            let vars["query"] = "%" . _POST["q"] . "%";
+            let filter = "?p=" . urlencode(_POST["q"]);
+        } elseif (isset(_GET["c"])) {
             let query .= " WHERE category = :query";
             let categories_query .= " WHERE category = :query";
-            let vars["query"] = urldecode(_GET["cat"]);
-            let filter = "?cat=" . _GET["cat"];
+            let vars["query"] = urldecode(_GET["c"]);
+            let filter = "?c=" . _GET["c"];
         }
         let categories_query .= " GROUP BY category ORDER BY category";
         let query .= " ORDER BY pattern";
@@ -363,14 +363,14 @@ class Patterns extends Controller
                         <tr>
                             <th>Pattern<span class='required'>*</span></th>
                             <td>
-                                <input name='pattern' type='text' value='" . (isset(_POST["pattern"]) ? _POST["pattern"]  : ""). "'>
+                                <input name='q' type='text' value='" . (isset(_POST["q"]) ? _POST["q"]  : ""). "'>
                             </td>
                         </tr>
                         <tfoot>
                             <tr>
                                 <td colspan='2'>
                                     <button type='submit' name='search' value='search' class='float-right'>search</button>";
-            if (isset(_POST["pattern"])) {
+            if (isset(_POST["q"])) {
                 let html .= "<a href='" . this->urlAddKey("/patterns") . "' class='float-right button'>clear</a>";
             }
             let html .= "</td>
@@ -382,9 +382,9 @@ class Patterns extends Controller
             if (categories) {
                 let html .= "<div id='tags' class='wfull'>";
                 for item in categories {
-                    let html .= "<a class='tag' href='" . this->urlAddKey("/patterns?cat=" . urlencode(item->category)) . "'>" . item->category . "</a>";
+                    let html .= "<a class='tag' href='" . this->urlAddKey("/patterns?c=" . urlencode(item->category)) . "'>" . item->category . "</a>";
                 }
-                if (isset(_GET["cat"])) {
+                if (isset(_GET["c"])) {
                     let html .= "<a href='" . this->urlAddKey("/patterns") . "' class='float-left button'>clear filter</a>";
                 }
                 let html .= "</div>";
@@ -419,9 +419,11 @@ class Patterns extends Controller
                 <a href='" . this->urlAddKey("/patterns/import") . "' class='round icon icon-import' title='Import Janus patterns'>&nbsp;</a>
             </div>";
         } else {
-            let html .= "
-                <h2><span>No patterns found</span></h2>
-                <p><a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
+            let html .= "<h2><span>No patterns found</span></h2>";
+            if (isset(_POST["q"])) {
+                let html .= "<p><a href='" . this->urlAddKey("/patterns") . "' class='button'>clear search</a></p>";
+            }
+            let html .= "<p><a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }

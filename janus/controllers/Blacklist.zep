@@ -105,7 +105,22 @@ class Blacklist extends Controller
         <h2><span>Matching patterns</span></h2>";
 
         let data = this->db->all(
-            "SELECT * FROM found_block_patterns WHERE ip=:ip GROUP BY pattern ORDER BY label",
+            "SELECT
+                main.*,
+                (
+                    SELECT 
+                        count(id) 
+                    FROM 
+                        found_block_patterns AS sub 
+                    WHERE 
+                        sub.ip=main.ip AND sub.pattern=main.pattern 
+                    GROUP BY sub.pattern
+                ) AS total 
+            FROM 
+                found_block_patterns AS main
+            WHERE 
+                main.ip=:ip GROUP BY main.pattern 
+            ORDER BY total DESC, main.label ASC",
             [
                 "ip": data->ip
             ]
@@ -115,8 +130,9 @@ class Blacklist extends Controller
                 <thead>
                     <tr>
                         <th>Pattern</th>
-                        <th width='200px'>Label</th>
-                        <th width='200px'>Category</th>
+                        <th width='200px'>Matches</th>
+                        <th>Label</th>
+                        <th>Category</th>
                     </tr>
                 </thead>
                 <tbody>";
@@ -124,15 +140,14 @@ class Blacklist extends Controller
             for item in data {
                 let html .= "<tr>
                     <td>" . item->pattern . "</td>
+                    <td>" . item->total . "</td>
                     <td>" . item->label . "</td>
                     <td>" . item->category . "</td>
                 </tr>";
             }
             let html .= "</tbody></table>";
         } else {
-            let html .= "
-                <h2><span>No patterns yet</span></h2>
-                <p><a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
+            let html .= "<h2><span>No patterns found</span></h2>";
         }
 
         return html;
@@ -140,7 +155,7 @@ class Blacklist extends Controller
 
     public function index(string path)
     {
-        var html, data;
+        var html, data, query, vars=[];
         let html = this->pageTitle("Blacklisted IPs");
 
         if (isset(_GET["deleted"])) {
@@ -149,12 +164,53 @@ class Blacklist extends Controller
             let html .= this->info("Entry has been marked for whitelisting");
         }
         
-        let data = this->db->all("SELECT * FROM blacklist");
+        let query = "
+            SELECT 
+                blacklist.*,
+                (
+                    SELECT 
+                        count(found_block_patterns.id) 
+                    FROM 
+                        found_block_patterns 
+                    WHERE 
+                        found_block_patterns.ip=blacklist.ip
+                ) AS patterns 
+                FROM blacklist";
+        if (isset(_POST["q"])) {
+            let query .= " WHERE blacklist.ip LIKE :query";
+            let vars["query"] = "%" . _POST["q"] . "%";
+        }
+        let query .= " ORDER BY patterns DESC, blacklist.ip ASC";
+
+        let data = this->db->all(query, vars);
         if (count(data)) {
+            let html .= "
+                <form action='" . this->urlAddKey("/blacklist") . "' method='post'>
+                    <table class='table wfull'>
+                        <tr>
+                            <th>IP<span class='required'>*</span></th>
+                            <td>
+                                <input name='q' type='text' value='" . (isset(_POST["q"]) ? _POST["q"]  : ""). "'>
+                            </td>
+                        </tr>
+                        <tfoot>
+                            <tr>
+                                <td colspan='2'>
+                                    <button type='submit' name='search' value='search' class='float-right'>search</button>";
+            if (isset(_POST["q"])) {
+                let html .= "<a href='" . this->urlAddKey("/blacklist") . "' class='float-right button'>clear</a>";
+            }
+            let html .= "</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </form>";
+
             let html .= "<table class='table wfull'>
                 <thead>
                     <tr>
                         <th width='200px'>IP</th>
+                        <th>Patterns</th>
                         <th>Country</th>
                         <th>Service</th>
                         <th class='buttons' width='140px'>
@@ -167,6 +223,7 @@ class Blacklist extends Controller
             for item in data {
                 let html .= "<tr>
                     <td>" . item->ip . "</td>
+                    <td>" . item->patterns . "</td>
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
                     <td class='buttons'>
@@ -178,9 +235,11 @@ class Blacklist extends Controller
             }
             let html .= "</tbody></table>";
         } else {
-            let html .= "
-                <h2><span>Nothing blacklisted yet</span></h2>
-                <p><a href='" . this->urlAddKey("/blacklist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
+            let html .= "<h2><span>Nothing found</span></h2>";
+            if (isset(_POST["q"])) {
+                let html .= "<p><a href='" . this->urlAddKey("/blacklist") . "' class='button'>clear search</a></p>";
+            }
+            let html .= "<p><a href='" . this->urlAddKey("/blacklist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }

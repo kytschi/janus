@@ -232,7 +232,7 @@ class Whitelist extends Controller
 
     public function index(string path)
     {
-        var html, data;
+        var html, data, query, vars=[];
         let html = this->pageTitle("Whitelist IPs");
 
         if (isset(_GET["deleted"])) {
@@ -240,9 +240,39 @@ class Whitelist extends Controller
         } elseif (isset(_GET["blacklist"])) {
             let html .= this->info("Entry has been marked for blacklisting");
         }
-        
-        let data = this->db->all("SELECT * FROM whitelist");
+
+        let query = "SELECT * FROM whitelist";
+        if (isset(_POST["q"])) {
+            let query .= " WHERE ip LIKE :query";
+            let vars["query"] = "%" . _POST["q"] . "%";
+        }
+        let query .= " ORDER BY ip, country";
+
+        let data = this->db->all(query, vars);
+            
         if (count(data)) {
+            let html .= "
+                <form action='" . this->urlAddKey("/whitelist") . "' method='post'>
+                    <table class='table wfull'>
+                        <tr>
+                            <th>IP<span class='required'>*</span></th>
+                            <td>
+                                <input name='q' type='text' value='" . (isset(_POST["q"]) ? _POST["q"]  : ""). "'>
+                            </td>
+                        </tr>
+                        <tfoot>
+                            <tr>
+                                <td colspan='2'>
+                                    <button type='submit' name='search' value='search' class='float-right'>search</button>";
+            if (isset(_POST["q"])) {
+                let html .= "<a href='" . this->urlAddKey("/whitelist") . "' class='float-right button'>clear</a>";
+            }
+            let html .= "</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </form>";
+
             let html .= "<table class='table wfull'>
                 <thead>
                     <tr>
@@ -270,8 +300,11 @@ class Whitelist extends Controller
             }
             let html .= "</tbody></table>";
         } else {
-            let html .= "<h2><span>Nothing whitelisted yet</span></h2>
-                <p><a href='" . this->urlAddKey("/whitelist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
+            let html .= "<h2><span>Nothing found</span></h2>";
+            if (isset(_POST["q"])) {
+                let html .= "<p><a href='" . this->urlAddKey("/whitelist") . "' class='button'>clear search</a></p>";
+            }
+            let html .= "<p><a href='" . this->urlAddKey("/whitelist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }

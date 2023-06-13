@@ -231,15 +231,45 @@ class Logs extends Controller
 
     public function index(string path)
     {
-        var html, data;
+        var html, data, query, vars=[];
         let html = this->pageTitle("Logs to watch");
 
         if (isset(_GET["deleted"])) {
             let html .= this->info("Entry deleted");
         }
+
+        let query = "SELECT * FROM logs";
+        if (isset(_POST["q"])) {
+            let query .= " WHERE log LIKE :query";
+            let vars["query"] = "%" . _POST["q"] . "%";
+        }
+        let query .= " ORDER BY log";
+
+        let data = this->db->all(query, vars);
         
-        let data = this->db->all("SELECT * FROM logs ORDER BY log");
         if (count(data)) {
+            let html .= "
+                <form action='" . this->urlAddKey("/logs") . "' method='post'>
+                    <table class='table wfull'>
+                        <tr>
+                            <th>Log<span class='required'>*</span></th>
+                            <td>
+                                <input name='q' type='text' value='" . (isset(_POST["q"]) ? _POST["q"]  : ""). "'>
+                            </td>
+                        </tr>
+                        <tfoot>
+                            <tr>
+                                <td colspan='2'>
+                                    <button type='submit' name='search' value='search' class='float-right'>search</button>";
+            if (isset(_POST["q"])) {
+                let html .= "<a href='" . this->urlAddKey("/logs") . "' class='float-right button'>clear</a>";
+            }
+            let html .= "</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </form>";
+
             let html .= "<table class='table wfull'>
                 <thead>
                     <tr>
@@ -262,9 +292,11 @@ class Logs extends Controller
             }
             let html .= "</tbody></table>";
         } else {
-            let html .= "
-                <h2><span>No logs defined to watch yet</span></h2>
-                <p><a href='" . this->urlAddKey("/logs/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
+            let html .= "<h2><span>No logs found</span></h2>";
+            if (isset(_POST["q"])) {
+                let html .= "<p><a href='" . this->urlAddKey("/logs") . "' class='button'>clear search</a></p>";
+            }
+            let html .= "<p><a href='" . this->urlAddKey("/logs/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
         return html;
     }
