@@ -13,6 +13,8 @@ Make sure to carefully build your whitelist so not to block valid services or se
 * PHP-SQLite
 * geoiplookup (OPTIONAL, only if you want to lookup the country of origin)
 * whois (OPTIONAL, only if you want to lookup the service)
+* iptables (IPv4 only at mo)
+* nginx (plan to add more support)
 
 ## Setup
 
