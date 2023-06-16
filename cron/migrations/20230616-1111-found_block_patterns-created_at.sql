@@ -1,0 +1,1 @@
+ALTER TABLE found_block_patterns ADD created_at TEXT;

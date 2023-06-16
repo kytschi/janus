@@ -1,0 +1,1 @@
+ALTER TABLE whitelist ADD created_at TEXT;

@@ -1,0 +1,4 @@
+CREATE TABLE migrations (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	migration INTEGER
+);
