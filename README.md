@@ -64,7 +64,7 @@ $key = '/var/www/janus/janus.key';
 ```
 
 ### Step 6: login and configure the settings
-The default login is username: `janus` and password: `letmein` **CHANGE THIS!** Go to `settings` and this from their `users` then update the username and password to whatever you like. Don't use something like `admin` or `root` be creative.
+The default login is username: `janus` and password: `letmein` **CHANGE THIS!** Go to `settings` and from there `users` then update the username and password to whatever you like. **Don't use something like `admin` or `root` be creative!**
 
 Next from the `settings` set the various folders and commands to match your server setup.
 
@@ -79,6 +79,17 @@ Now set yourself a `cron` up to trigger the `cron.sh` at a time that suits you. 
 ```sh
 0 0 * * * sh /var/www/janus/cron/cron.sh
 ```
+
+## Updating
+
+Either git pull, clone or download the latest from the repo to keep Janus up to date.
+
+**DO NOT FORGET TO RESTART THE PHP SERVER**
+
+### Migrations
+To update the database with the latest migrations, make sure the webserver user can write to the `migrations` folder in the `cron` folder and go to `settings` in Janus and click save.
+
+This will create a bash script called `migrations.sh` simply run this and any new migrations will be executed.
 
 ## Credits
 Janus background - Deep Ellum Janus, by Dan Colcer (Transylvania, Romania @dcolcerart) was painted in 2016.

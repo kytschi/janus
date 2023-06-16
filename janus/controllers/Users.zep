@@ -158,13 +158,15 @@ class Users extends Controller
                 ];
 
                 if (isset(_POST["password"]) && isset(_POST["password_check"])) {
-                    if (_POST["password"] != _POST["password_check"]) {
-                        let html .= this->error("Passwords do not match");
-                        let error = true;
-                    }
+                    if (!empty(_POST["password"]) && !empty(_POST["password_check"])) {
+                        if (_POST["password"] != _POST["password_check"]) {
+                            let html .= this->error("Passwords do not match");
+                            let error = true;
+                        }
 
-                    let query .= ", password=:password";
-                    let set["password"] = password_hash(_POST["password"], PASSWORD_DEFAULT);
+                        let query .= ", password=:password";
+                        let set["password"] = password_hash(_POST["password"], PASSWORD_DEFAULT);
+                    }
                 }
 
                 if (!error) {
