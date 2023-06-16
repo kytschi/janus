@@ -71,13 +71,15 @@ class Whitelist extends Controller
                             :ip,
                             :country,
                             :service,
-                            :whois
+                            :whois,
+                            :created_at
                         )",
                     [
                         "ip": _POST["ip"],
                         "country": country,
                         "service": service,
-                        "whois": whois
+                        "whois": whois,
+                        "created_at": date("Y-m-d")
                     ]
                 );
 
@@ -204,6 +206,10 @@ class Whitelist extends Controller
                 <tr>
                     <th>IP</th>
                     <td>" . data->ip . "</td>
+                </tr>
+                <tr>
+                    <th>Created at</th>
+                    <td>" . (data->created_at ? Date("d/m/Y", strtotime(data->created_at)) : "Unknown") . "</td>
                 </tr>
                 <tr>
                     <th>Country</th>

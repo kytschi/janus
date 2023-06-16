@@ -161,7 +161,9 @@ class Logs extends Controller
             <a href='" . this->urlAddKey("/logs/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
         </div>";
 
-        var dir, logs, log, line, lines, iLoop=0, patterns, found, pattern;
+        var dir, logs, log, line, lines, iLoop=0,
+            patterns, found, pattern, matches,
+            start, found_html="";
         let dir = shell_exec("ls " . data->log);
         if (!empty(dir)) {
             let logs = explode("\n", dir);
@@ -187,7 +189,8 @@ class Logs extends Controller
                         if (empty(line)) {
                             continue;
                         }
-
+                        
+                        let start = "";
                         let found = false;
                         for pattern in patterns {
                             if (strpos(strtolower(line), strtolower(pattern->pattern)) !== false) {
@@ -195,26 +198,70 @@ class Logs extends Controller
                                 break;
                             }
                         }
+                        let html .= "<tr>";
                         if (found) {
-                            let html .= "<tr><th>
-                                <p class='log-output'>" . line . "</p>
-                                <p><strong>
-                                    Found pattern: 
-                                    <a title='Found the pattern in Janus' href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>" . found->pattern . "</a>
-                                </strong>
-                                </p>
-                            </th></tr>";
+                            let start = "<th>";
+                            let found_html = "<p class='log-output'>" . line . "</p>
+                                <a 
+                                    class='tag' 
+                                    title='Found the pattern in Janus'
+                                    href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>
+                                    <strong>Found pattern: " . found->pattern . "</strong>
+                                </a>";
                         } else {
-                            let html .= "<tr>
-                                <td>
-                                    <p class='log-output'>" . line . "</p>
-                                    <a 
+                            let found_html = "<p class='log-output'>" . line . "</p>
+                                <a 
                                     title='Create a pattern from line' 
                                     href='" .this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) ."'
-                                    class='mini icon icon-add'>&nbsp;</a>
-                                </td>
-                            </tr>";
+                                    class='mini icon icon-patterns'>&nbsp;</a>";
                         }
+
+                        if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
+                            let found = this->db->get(
+                                "SELECT * FROM blacklist WHERE ip=:ip",
+                                [
+                                    "ip": matches[0]
+                                ]
+                            );
+                            if (found) {
+                                let start = "<th>";
+                                let found_html .= "<a 
+                                        class='tag' 
+                                        title='Blacklisted in Janus' 
+                                        href='" . this->urlAddKey("/blacklist/edit/" . found->id) . "'>
+                                        <strong>Found blacklisted IP: " . found->ip . "</strong>
+                                    </a>";
+                            } else {
+                                let found_html .= "<a 
+                                    title='Create a blacklist entry for IP' 
+                                    href='" .this->urlAddKey("/blacklist/add?ip=" . urlencode(matches[0])) ."'
+                                    class='mini icon icon-blacklist'>&nbsp;</a>";
+                            }
+
+                            let found = this->db->get(
+                                "SELECT * FROM whitelist WHERE ip=:ip",
+                                [
+                                    "ip": matches[0]
+                                ]
+                            );
+                            if (found) {
+                                let start = "<th>";
+                                let found_html .= "<a 
+                                        class='tag' 
+                                        title='Whitelisted in Janus' 
+                                        href='" . this->urlAddKey("/whitelist/edit/" . found->id) . "'>
+                                        <strong>Found whitelisted IP: " . found->ip . "</strong>
+                                    </a>";
+                            } else {
+                                let found_html .= "<a 
+                                    title='Create a whitelist entry for IP' 
+                                    href='" .this->urlAddKey("/whitelist/add?ip=" . urlencode(matches[0])) ."'
+                                    class='mini icon icon-whitelist'>&nbsp;</a>";
+                            }
+                        }
+                        let html .= (!empty(start) ? start : "<td>") .
+                            found_html . 
+                            (start == "<th>" ? "</th>" : "</td>") . "</tr>";
                     }
                 }
 

@@ -38,14 +38,14 @@ use Janus\Ui\Head;
 
 class Janus extends Controller
 {
-    public function __construct(string db, string url_key = "", bool cron = false)
+    public function __construct(string db, string url_key = "", bool cron = false, bool migrations = false)
     {
         if (!file_exists(db)) {
-            throw new Exception("SQLite DB not found", cron);
+            throw new Exception("SQLite DB not found", (cron || migrations) ? true : false);
         }
 
         if (!file_exists(url_key)) {
-            throw new Exception("Invalid key", cron);
+            throw new Exception("Invalid key", (cron || migrations) ? true : false);
         }
 
         let this->db = new Database(db);
@@ -61,6 +61,9 @@ class Janus extends Controller
             if (!this->settings->cron_running) {
                 this->scan("/scan", cron);
             }
+            return;
+        } elseif (migrations) {
+            this->runMigrations();
             return;
         }
 
@@ -555,6 +558,69 @@ class Janus extends Controller
         </div></div>";
     }
 
+    private function runMigrations()
+    {
+        var migration, migrations, err, found;
+
+        echo "Running migrations\n";
+        let migration = shell_exec("ls " . rtrim(this->settings->cron_folder, "/") . "/migrations/*.sql");
+        if (empty(migration)) {
+            echo "Nothing to migrate!\n";
+            return;
+        }
+        let migrations = explode("\n", migration);
+        if (!count(migrations)) {
+            echo "Nothing to migrate!\n";
+            return;
+        }
+
+        for migration in migrations {
+            if (empty(migration)) {
+                continue;
+            }
+
+            try {
+                let found = this->db->get(
+                    "SELECT * FROM migrations WHERE migration=:migration",
+                    [
+                        "migration": basename(migration)
+                    ]
+                );
+            } catch \Exception, err {
+                let found = false;
+            }
+
+            if (found) {
+                continue;
+            }
+
+            try {
+                let found = this->db->execute(
+                    file_get_contents(migration)
+                );
+                if (!is_bool(found)) {
+                    echo "Failed to run the migration " . basename(migration) . ", ". found . "\n";
+                } else {
+                    echo basename(migration) . " successfully run\n";
+                }
+
+                let found = this->db->execute(
+                    "INSERT INTO migrations ('migration') VALUES(:migration)",
+                    [
+                        "migration": basename(migration)
+                    ]
+                );
+                if (!is_bool(found)) {
+                    echo "Failed to save the migration " . basename(migration) .
+                        " in the migrations table, ". found . "\n";
+                }
+            } catch \Exception, err {
+                echo "Failed to run the migration " . basename(migration) . ", " . err->getMessage() . "\n";
+            }
+        }
+        echo "Migrations complete\n";
+    }
+
     private function scan(string path, bool cron = false)
     {
         if (this->settings->cron_running) {
@@ -667,13 +733,15 @@ class Janus extends Controller
                                             :ip,
                                             :country,
                                             :whois,
-                                            :service
+                                            :service,
+                                            :created_at
                                         )",
                                     [
                                         "ip": matches[0],
                                         "country": country,
                                         "whois": whois,
-                                        "service": service
+                                        "service": service,
+                                        "created_at": date("Y-m-d")
                                     ]
                                 );
                             }

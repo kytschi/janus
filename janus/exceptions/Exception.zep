@@ -29,15 +29,15 @@ use Janus\Ui\Head;
 class Exception extends \Exception
 {
     public code = 500;
-    private cron = false;
+    private console = false;
     private back_url = "/";
     
-	public function __construct(string message, bool cron = false)
+	public function __construct(string message, bool console = false)
 	{
         //Trigger the parent construct.
         parent::__construct(message, this->code);
 
-        let this->cron = cron;
+        let this->console = console;
     }
 
     /**
@@ -45,7 +45,7 @@ class Exception extends \Exception
      */
     public function __toString()
     {
-        if (this->cron) {
+        if (this->console) {
             return this->getMessage();
         }
         

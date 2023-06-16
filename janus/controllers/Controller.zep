@@ -250,6 +250,14 @@ then
 fi
 $IPTABLES-save > $CONF"
         );
+        // Write the migrations.
+        file_put_contents(
+            rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh",
+            "#!/bin/bash
+# DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
+
+php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', false, true);\";"
+        );
         } catch \Exception, err {
             throw new Exception("Failed to write the cron.sh, " . err->getMessage());
         }

@@ -30,11 +30,99 @@ use Janus\Exceptions\Exception;
 class Blacklist extends Controller
 {
     public routes = [
+        "/blacklist/add": "add",
         "/blacklist/delete/": "delete",
         "/blacklist/edit/": "edit",
         "/blacklist/white/": "whitelist",
         "/blacklist": "index"
     ];
+
+    public function add(string path)
+    {
+        var html, status, ip="";
+        let html = this->pageTitle("Blacklist an IP");
+
+        if (isset(_POST["ip"])) {
+            let ip = _POST["ip"];
+        } elseif (isset(_GET["ip"])) {
+            let ip = urldecode(_GET["ip"]);
+        }
+
+        if (isset(_POST["save"])) {
+            if (!this->validate(_POST, ["ip"])) {
+                let html .= this->error();
+            } else {
+                var country, service, whois, data;
+                let country = "UNKNOWN";
+                if (this->settings->ip_lookup) {
+                    let country = this->getCountry(_POST["ip"]);
+                }
+
+                let service = "UNKNOWN";
+                let whois = "UNKNOWN";
+                if (this->settings->service_lookup) {
+                    let data = this->getService(_POST["ip"]);
+                    let whois = data[0];
+                    if (data[1]) {
+                        let service = data[1];
+                    }
+                }
+
+                let status = this->db->execute(
+                    "INSERT OR REPLACE INTO blacklist
+                        (id, 'ip', 'country', 'service', 'whois') 
+                    VALUES 
+                        (
+                            (SELECT id FROM blacklist WHERE ip=:ip),
+                            :ip,
+                            :country,
+                            :service,
+                            :whois,
+                            :created_at
+                        )",
+                    [
+                        "ip": _POST["ip"],
+                        "country": country,
+                        "service": service,
+                        "whois": whois,
+                        "created_at": date("Y-m-d")
+                    ]
+                );
+
+                if (!is_bool(status)) {
+                    throw new Exception(status);
+                }
+                unset(_POST["ip"]);
+                let html .= this->info("Entry created");
+            }
+        }
+
+        let html .= "
+        <form method='POST'>
+            <table class='table wfull'>
+                <tbody>
+                    <tr>
+                        <th>IP</th>
+                        <td>
+                            <input name='ip' type='text' value='" . (ip ? ip : "") . "'>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan='2'>
+                            <button type='submit' name='save' value='save' class='float-right'>save</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>
+        <div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/blacklist") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+        </div>";
+
+        return html;
+    }
 
     public function delete(string path)
     {
@@ -80,6 +168,10 @@ class Blacklist extends Controller
                 <tr>
                     <th>IP</th>
                     <td>" . data->ip . "</td>
+                </tr>
+                <tr>
+                    <th>Created at</th>
+                    <td>" . (data->created_at ? Date("d/m/Y", strtotime(data->created_at)) : "Unknown") . "</td>
                 </tr>
                 <tr>
                     <th>Country</th>

@@ -519,6 +519,9 @@ class Head extends Controller
         .icon-patterns::before {
             background-position: -64px -64px;
         }
+        .mini.icon-patterns::before {
+            background-position: -40px -40px !important;
+        }
         .icon-back::before {
             background-position: -128px -64px;
         }
