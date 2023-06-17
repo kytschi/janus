@@ -64,7 +64,7 @@ class Whitelist extends Controller
 
                 let status = this->db->execute(
                     "INSERT OR REPLACE INTO whitelist
-                        (id, 'ip', 'country', 'service', 'whois') 
+                        (id, 'ip', 'country', 'service', 'whois', 'created_at') 
                     VALUES 
                         (
                             (SELECT id FROM whitelist WHERE ip=:ip),
@@ -124,7 +124,7 @@ class Whitelist extends Controller
         let data = this->db->get(
             "SELECT * FROM whitelist WHERE id=:id",
             [
-                "id": this->cleanUrl(path, "/blacklist/black/")
+                "id": this->cleanUrl(path, "/whitelist/black/")
             ]
         );
 
@@ -139,20 +139,22 @@ class Whitelist extends Controller
         
         let status = this->db->execute(
             "INSERT OR REPLACE INTO blacklist
-                (id, 'ip', 'country', 'whois', 'service') 
+                (id, 'ip', 'country', 'whois', 'service', 'created_at') 
             VALUES 
                 (
                     (SELECT id FROM blacklist WHERE ip=:ip),
                     :ip,
                     :country,
                     :whois,
-                    :service
+                    :service,
+                    :created_at
                 )",
             [
                 "ip": data->ip,
                 "country": data->country,
                 "service": data->service,
-                "whois": data->whois
+                "whois": data->whois,
+                "created_at": date("Y-m-d")
             ]
         );
         if (!is_bool(status)) {
@@ -247,12 +249,15 @@ class Whitelist extends Controller
             let html .= this->info("Entry has been marked for blacklisting");
         }
 
-        let query = "SELECT * FROM whitelist";
+        let query = "SELECT 
+            whitelist.*,
+            (SELECT id FROM blacklist WHERE blacklist.ip=whitelist.ip) AS blacklisted 
+        FROM whitelist";
         if (isset(_POST["q"])) {
-            let query .= " WHERE ip LIKE :query";
+            let query .= " WHERE whitelist.ip LIKE :query";
             let vars["query"] = "%" . _POST["q"] . "%";
         }
-        let query .= " ORDER BY ip, country";
+        let query .= " ORDER BY whitelist.ip, whitelist.country";
 
         let data = this->db->all(query, vars);
             
@@ -285,6 +290,7 @@ class Whitelist extends Controller
                         <th width='200px'>IP</th>
                         <th>Country</th>
                         <th>Service</th>
+                        <th>Blacklisted</th>
                         <th class='buttons' width='140px'>
                             <a href='" . this->urlAddKey("/whitelist/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
@@ -297,6 +303,7 @@ class Whitelist extends Controller
                     <td>" . item->ip . "</td>
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
+                    <td>" . (item->blacklisted ? "YES" : "NO") . "</td>
                     <td class='buttons'>
                         <a href='" . this->urlAddKey("/whitelist/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
                         <a href='" . this->urlAddKey("/whitelist/black/" . item->id) . "' class='mini icon icon-blacklist' title='Blacklist the entry'>&nbsp;</a>

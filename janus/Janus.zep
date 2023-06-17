@@ -726,7 +726,7 @@ class Janus extends Controller
 
                                 this->db->execute(
                                     "INSERT OR REPLACE INTO blacklist
-                                        (id, 'ip', 'country', 'whois', 'service') 
+                                        (id, 'ip', 'country', 'whois', 'service', 'created_at') 
                                     VALUES 
                                         (
                                             (SELECT id FROM blacklist WHERE ip=:ip),

@@ -70,7 +70,7 @@ class Blacklist extends Controller
 
                 let status = this->db->execute(
                     "INSERT OR REPLACE INTO blacklist
-                        (id, 'ip', 'country', 'service', 'whois') 
+                        (id, 'ip', 'country', 'service', 'whois', 'created_at') 
                     VALUES 
                         (
                             (SELECT id FROM blacklist WHERE ip=:ip),
@@ -266,7 +266,8 @@ class Blacklist extends Controller
                         found_block_patterns 
                     WHERE 
                         found_block_patterns.ip=blacklist.ip
-                ) AS patterns 
+                ) AS patterns,
+                (SELECT id FROM whitelist WHERE whitelist.ip=blacklist.ip) AS whitelisted  
                 FROM blacklist";
         if (isset(_POST["q"])) {
             let query .= " WHERE blacklist.ip LIKE :query";
@@ -305,6 +306,7 @@ class Blacklist extends Controller
                         <th>Patterns</th>
                         <th>Country</th>
                         <th>Service</th>
+                        <th>Whitelisted</th>
                         <th class='buttons' width='140px'>
                             <a href='" . this->urlAddKey("/blacklist/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
@@ -318,6 +320,7 @@ class Blacklist extends Controller
                     <td>" . item->patterns . "</td>
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
+                    <td>" . (item->whitelisted ? "<span class='tag'>YES</span>" : "NO") . "</td>
                     <td class='buttons'>
                         <a href='" . this->urlAddKey("/blacklist/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
                         <a href='" . this->urlAddKey("/blacklist/white/" . item->id) . "' class='mini icon icon-whitelist' title='Whitelist the entry'>&nbsp;</a>
@@ -357,14 +360,15 @@ class Blacklist extends Controller
         
         let status = this->db->execute(
             "INSERT OR REPLACE INTO whitelist
-                (id, 'ip', 'country', 'whois', 'service') 
+                (id, 'ip', 'country', 'whois', 'service', 'created_at') 
             VALUES 
                 (
                     (SELECT id FROM whitelist WHERE ip=:ip),
                     :ip,
                     :country,
                     :whois,
-                    :service
+                    :service,
+                    :created_at
                 )",
             [
                 "ip": data->ip,
