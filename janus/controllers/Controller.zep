@@ -221,6 +221,9 @@ CONF=" . this->settings->firewall_cfg_folder . this->settings->firewall_cfg_file
             
 # Create the chain JANUS_BLACKLIST
 $IPTABLES -N JANUS_BLACKLIST
+
+# Add the chain to INPUT
+$IPTABLES -A INPUT -j JANUS_BLACKLIST
             
 # Empty the chain JANUS_BLACKLIST before adding rules
 $IPTABLES -F JANUS_BLACKLIST
@@ -233,6 +236,9 @@ done
 
 # Create the chain JANUS_WHITELIST
 $IPTABLES -N JANUS_WHITELIST
+
+# Add the chain to INPUT
+$IPTABLES -A INPUT -j JANUS_WHITELIST
             
 # Empty the chain JANUS_WHITELIST before adding rules
 $IPTABLES -F JANUS_WHITELIST
@@ -242,6 +248,7 @@ $IPTABLES -F JANUS_WHITELIST
 do
     $IPTABLES -A JANUS_WHITELIST -s $IP -j DROP
 done
+
             
 # Save current configuration to file
 if [ ! -d \"" . this->settings->firewall_cfg_folder . "\" ]
