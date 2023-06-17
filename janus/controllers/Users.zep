@@ -184,7 +184,7 @@ class Users extends Controller
                 }
             }
         }
-
+                
         let html .= "
         <form method='POST'>
             <table class='table wfull'>

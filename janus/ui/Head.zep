@@ -560,6 +560,9 @@ class Head extends Controller
             line-height: 20px;
             padding: 20px 20px 10px 20px;
         }
+        .tag strong {
+            text-transform: none !important;
+        }
         </style>";
     }
 
