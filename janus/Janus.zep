@@ -562,7 +562,7 @@ class Janus extends Controller
     {
         var migration, migrations, err, found;
 
-        echo "Running migrations\n";
+        echo " Running migrations\n";
         let migration = shell_exec("ls " . rtrim(this->settings->cron_folder, "/") . "/migrations/*.sql");
         if (empty(migration)) {
             echo "Nothing to migrate!\n";
@@ -599,31 +599,33 @@ class Janus extends Controller
                     file_get_contents(migration)
                 );
                 if (!is_bool(found)) {
-                    echo "Failed to run the migration " . basename(migration) . ", ". found . "\n";
+                    echo "Failed to run the migration " . basename(migration) .
+                        "\n Error: ". found . "\n";
                 } else {
                     echo basename(migration) . " successfully run\n";
                 }
 
                 let found = this->db->execute(
-                    "INSERT INTO migrations ('migration') VALUES(:migration)",
+                    "INSERT INTO migrations (migration) VALUES(:migration)",
                     [
                         "migration": basename(migration)
                     ]
                 );
                 if (!is_bool(found)) {
-                    echo "Failed to save the migration " . basename(migration) .
-                        " in the migrations table, ". found . "\n";
+                    echo " Failed to save the migration " . basename(migration) .
+                        " in the migrations table\n Error: ". found . "\n";
                 }
             } catch \Exception, err {
-                echo "Failed to run the migration " . basename(migration) . ", " . err->getMessage() . "\n";
+                echo " Failed to run the migration " . basename(migration) .
+                    "\n Error: " . err->getMessage() . "\n";
             }
         }
-        echo "Migrations complete\n";
+        echo " Migrations complete\n";
     }
 
     private function scan(string path, bool cron = false)
     {
-        if (this->settings->cron_running) {
+        if (this->settings->cron_running && !cron) {
             return this->pageTitle("Scanning logs") . "
             <div class='row'>
                 <div class='box'>
@@ -693,7 +695,7 @@ class Janus extends Controller
 
                                 this->db->execute(
                                     "INSERT INTO found_block_patterns
-                                        ('ip', 'pattern', 'label', 'category') 
+                                        (ip, pattern, label, category) 
                                     VALUES 
                                         (
                                             :ip,
@@ -726,7 +728,7 @@ class Janus extends Controller
 
                                 this->db->execute(
                                     "INSERT OR REPLACE INTO blacklist
-                                        (id, 'ip', 'country', 'whois', 'service', 'created_at') 
+                                        (id, ip, country, whois, service, created_at) 
                                     VALUES 
                                         (
                                             (SELECT id FROM blacklist WHERE ip=:ip),
@@ -750,9 +752,8 @@ class Janus extends Controller
                 }
             }
 
-            this->writeCronFiles(cron);
-
             this->db->execute("UPDATE settings SET cron_running=0");
+            this->writeCronFiles(cron);
             
             return this->pageTitle("Scanning logs") . "
             <div class='row'>
@@ -769,6 +770,7 @@ class Janus extends Controller
                 </div>
             </div>";
         } catch \Exception, err {
+            this->db->execute("UPDATE settings SET cron_running=0");
             throw new Exception(err->getMessage(), cron);
         }
     }

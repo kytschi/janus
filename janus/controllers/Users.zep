@@ -55,7 +55,7 @@ class Users extends Controller
                 }
 
                 let status = this->db->execute(
-                    "INSERT INTO users ('name', 'password') VALUES (:name, :password)",
+                    "INSERT INTO users (name, password) VALUES (:name, :password)",
                     [
                         "name": _POST["name"],
                         "password": password_hash(_POST["password"], PASSWORD_DEFAULT)
