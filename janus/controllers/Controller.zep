@@ -246,7 +246,7 @@ $IPTABLES -F JANUS_WHITELIST
 # Read $IP_WHITELIST and add IP into IPTables one by one
 /bin/egrep -v \"^#|^$|:\" $IP_WHITELIST | sort | uniq | while read IP
 do
-    $IPTABLES -A JANUS_WHITELIST -s $IP -j DROP
+    $IPTABLES -A JANUS_WHITELIST -s $IP -j ACCEPT
 done
 
             
