@@ -686,11 +686,7 @@ class Janus extends Controller
                             if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
                                 //Always ignore localhost.
                                 if (matches[0] == "127.0.0.1") {
-                                    break;
-                                }
-                                let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
-                                if (!empty(data)) {
-                                    break;
+                                    continue;
                                 }
 
                                 this->db->execute(
@@ -710,6 +706,11 @@ class Janus extends Controller
                                         "category": pattern->category
                                     ]
                                 );
+
+                                let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
+                                if (!empty(data)) {
+                                    continue;
+                                }
 
                                 let country = "UNKNOWN";
                                 if (this->settings->ip_lookup) {

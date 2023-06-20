@@ -233,7 +233,54 @@ class Whitelist extends Controller
             <a href='" . this->urlAddKey("/whitelist") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
             <a href='" . this->urlAddKey("/whitelist/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
             <a href='" . this->urlAddKey("/whitelist/black/" . data->id) . "' class='round icon icon-blacklist align-right' title='Blacklist the entry'>&nbsp;</a>
-        </div>";
+        </div>
+        <h2><span>Matching patterns</span></h2>";
+
+        let data = this->db->all(
+            "SELECT
+                main.*,
+                (
+                    SELECT 
+                        count(id) 
+                    FROM 
+                        found_block_patterns AS sub 
+                    WHERE 
+                        sub.ip=main.ip AND sub.pattern=main.pattern 
+                    GROUP BY sub.pattern
+                ) AS total 
+            FROM 
+                found_block_patterns AS main
+            WHERE 
+                main.ip=:ip GROUP BY main.pattern 
+            ORDER BY total DESC, main.label ASC",
+            [
+                "ip": data->ip
+            ]
+        );
+        if (count(data)) {
+            let html .= "<table class='table wfull'>
+                <thead>
+                    <tr>
+                        <th>Pattern</th>
+                        <th width='200px'>Matches</th>
+                        <th>Label</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody>";
+            var item;
+            for item in data {
+                let html .= "<tr>
+                    <td>" . item->pattern . "</td>
+                    <td>" . item->total . "</td>
+                    <td>" . item->label . "</td>
+                    <td>" . item->category . "</td>
+                </tr>";
+            }
+            let html .= "</tbody></table>";
+        } else {
+            let html .= "<h2><span>No patterns found</span></h2>";
+        }
 
         return html;
     }
