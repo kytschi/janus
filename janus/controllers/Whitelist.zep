@@ -88,6 +88,7 @@ class Whitelist extends Controller
                 }
                 unset(_POST["ip"]);
                 let html .= this->info("Entry created");
+                this->writeCronFiles(true);
             }
         }
 

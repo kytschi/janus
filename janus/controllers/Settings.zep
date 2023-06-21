@@ -77,6 +77,13 @@ class Settings extends Controller
                 let html .= this->info("Settings updated");
                 this->writeCronFiles();
             }
+        } elseif (isset(_POST["reset_cron"])) {
+            let status = this->db->execute("UPDATE settings SET cron_running=0");
+
+            if (!is_bool(status)) {
+                throw new Exception(status);
+            }
+            let html .= this->info("Cleared the running cron flag");
         }
         
         let data = this->db->get("SELECT * FROM settings LIMIT 1");
@@ -156,6 +163,13 @@ class Settings extends Controller
                     <tr>
                         <td colspan='2'>
                             <button type='submit' name='save' value='save' class='float-right'>save</button>
+                            <button 
+                                type='submit' 
+                                name='reset_cron' 
+                                value='reset_cron' 
+                                class='float-right'>
+                                reset cron
+                            </button>
                         </td>
                     </tr>
                 </tfoot>
