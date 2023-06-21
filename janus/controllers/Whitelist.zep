@@ -171,7 +171,7 @@ class Whitelist extends Controller
         let data = this->db->get(
             "SELECT * FROM whitelist WHERE id=:id",
             [
-                "id": this->cleanUrl(path, "/blacklist/delete/")
+                "id": this->cleanUrl(path, "/whitelist/delete/")
             ]
         );
 
