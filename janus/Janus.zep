@@ -58,9 +58,7 @@ class Janus extends Controller
         let this->settings = settings;
 
         if (cron) {
-            if (!this->settings->cron_running) {
-                this->scan("/scan", cron);
-            }
+            this->scan("/scan", cron);
             return;
         } elseif (migrations) {
             this->runMigrations();
