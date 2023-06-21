@@ -208,8 +208,16 @@ class Controller
             // Write the cron.
             file_put_contents(
                 rtrim(this->settings->cron_folder, "/") . "/cron.sh",
-                "#!/bin/bash
+                "# !/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
+
+chainAdd () {
+    chain=`iptables -n --list INPUT | grep $1`
+    if [ -z \"$chain\" ]; then
+            # Add the chain to INPUT
+            $IPTABLES -A INPUT -j $1
+    fi
+}
 
 php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', true);\";
 
@@ -223,7 +231,7 @@ CONF=" . this->settings->firewall_cfg_folder . this->settings->firewall_cfg_file
 $IPTABLES -N JANUS_BLACKLIST
 
 # Add the chain to INPUT
-$IPTABLES -A INPUT -j JANUS_BLACKLIST
+chainAdd JANUS_BLACKLIST
             
 # Empty the chain JANUS_BLACKLIST before adding rules
 $IPTABLES -F JANUS_BLACKLIST
@@ -238,7 +246,7 @@ done
 $IPTABLES -N JANUS_WHITELIST
 
 # Add the chain to INPUT
-$IPTABLES -A INPUT -j JANUS_WHITELIST
+chainAdd JANUS_WHITELIST
             
 # Empty the chain JANUS_WHITELIST before adding rules
 $IPTABLES -F JANUS_WHITELIST
