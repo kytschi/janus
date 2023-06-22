@@ -222,11 +222,16 @@ chainAdd () {
 php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', true);\";
 
 DIR=$(dirname -- \"$0\";)
+WEBUSER=\"" . this->settings->webuser . "\"
 IPTABLES=" . this->settings->firewall_command . "
 IP_BLACKLIST=$DIR/blacklist
 IP_WHITELIST=$DIR/whitelist
 CONF=" . this->settings->firewall_cfg_folder . this->settings->firewall_cfg_file_v4 . "
-            
+
+# Set the files to writeable by webuser.
+chown $WEBUSER:$WEBUSER $IP_BLACKLIST
+chown $WEBUSER:$WEBUSER $IP_WHITELIST
+
 # Create the chain JANUS_BLACKLIST
 $IPTABLES -N JANUS_BLACKLIST
 

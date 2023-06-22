@@ -118,7 +118,7 @@ class Whitelist extends Controller
 
         return html;
     }
-
+    
     public function blacklist(string path)
     {
         var data, status;

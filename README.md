@@ -89,7 +89,7 @@ Either git pull, clone or download the latest from the repo to keep Janus up to 
 ### Migrations
 To update the database with the latest migrations, make sure the webserver user can write to the `migrations` folder in the `cron` folder and go to `settings` in Janus and click save.
 
-This will create a bash script called `migrations.sh` simply run this and any new migrations will be executed.
+This will create a bash script called `migrations.sh` simply run this from your terminal and any new migrations will be executed.
 
 ## Credits
 Janus background - Deep Ellum Janus, by Dan Colcer (Transylvania, Romania @dcolcerart) was painted in 2016.

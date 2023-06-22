@@ -4,7 +4,10 @@ compile-errors.log
 compile.log
 composer.lock
 vendor*
-cron/*
+cron/cron.sh
+cron/blacklist
+cron/whitelist
+cron/migrations/migrations.sh
 janus.db
 janus.key
 public/index.php

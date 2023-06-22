@@ -42,6 +42,7 @@ class Settings extends Controller
             if (!this->validate(
                     _POST,
                     [
+                        "webuser",
                         "firewall_command",
                         "cron_folder",
                         "firewall_cfg_folder",
@@ -55,6 +56,7 @@ class Settings extends Controller
                     "UPDATE 
                         settings
                     SET 
+                        webuser=:webuser,
                         ip_lookup=:ip_lookup,
                         service_lookup=:service_lookup,
                         firewall_command=:firewall_command,
@@ -62,6 +64,7 @@ class Settings extends Controller
                         firewall_cfg_file_v4=:firewall_cfg_file_v4,
                         cron_folder=:cron_folder",
                     [
+                        "webuser": _POST["webuser"],
                         "ip_lookup": isset(_POST["ip_lookup"]) ? 1 : 0,
                         "service_lookup": isset(_POST["service_lookup"]) ? 1 : 0,
                         "firewall_command": _POST["firewall_command"],
@@ -120,6 +123,15 @@ class Settings extends Controller
                                     </span>
                                 </label>
                             </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Web user<span class='required'>*</span></th>
+                        <td>
+                            <input 
+                                name='webuser'
+                                type='text'
+                                value='" . (isset(_POST["webuser"]) ? _POST["webuser"] : data->webuser) . "'>
                         </td>
                     </tr>
                     <tr>
