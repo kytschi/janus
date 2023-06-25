@@ -646,7 +646,7 @@ class Janus extends Controller
             this->db->execute("UPDATE settings SET cron_running=1");
 
             var folder, dir, logs, log, lines, line, pattern, patterns = [],
-                matches, db_logs, data, country, service, whois;
+                matches, db_logs, data, country, service, whois, errors = [], html;
 
             let patterns = this->db->all("SELECT * FROM block_patterns");
             let db_logs = this->db->all("SELECT * FROM logs");
@@ -654,7 +654,12 @@ class Janus extends Controller
             for folder in db_logs {
                 let dir = shell_exec("ls " . folder->log);
                 if (empty(dir)) {
-                    throw new Exception("Failed to list the logs folder", cron);
+                    if (cron) {
+                        echo "Failed to list the log/folder, " . folder->log . "\n";
+                    } else {
+                        let errors[] = "Failed to list the log/folder, " . folder->log;
+                    }
+                    continue;
                 }
                 let logs = explode("\n", dir);
                 if (!count(logs)) {
@@ -753,21 +758,29 @@ class Janus extends Controller
 
             this->db->execute("UPDATE settings SET cron_running=0");
             this->writeCronFiles(cron);
-            
-            return this->pageTitle("Scanning logs") . "
+
+            let html = this->pageTitle("Scanning logs") . "
             <div class='row'>
                 <div class='box'>
                     <div class='box-title'>
                         <span>Scan complete</span>
                     </div>
                     <div class='box-body'>
-                        <p>All done</p>
-                    </div>
+                        <p>All done</p>";
+            if (errors) {
+                let html .= "<p><strong>Errors Occcurred</strong></p>";
+                for folder in errors {
+                    let html .= "<p>" . folder . "</p>";
+                }
+            }
+            let html .= "</div>
                     <div class='box-footer'>
                         <a href='". this->urlAddKey("/dashboard") . "' class='button'>Back to dashboard</a>
                     </div>
                 </div>
             </div>";
+            
+            return html;
         } catch \Exception, err {
             this->db->execute("UPDATE settings SET cron_running=0");
             throw new Exception(err->getMessage(), cron);

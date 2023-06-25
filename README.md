@@ -80,6 +80,8 @@ Now set yourself a `cron` up to trigger the `cron.sh` at a time that suits you. 
 0 0 * * * sh /var/www/janus/cron/cron.sh
 ```
 
+Depending on how often you run the cron, I'd recommend that you watch the previous days logs and make sure you log rotate accordingly. This way you'll be blocking suspicious activing from the day before rather than on the day. Of course if your watching the logs faster than every 24hrs then use the current day's logs.
+
 ## Updating
 
 Either git pull, clone or download the latest from the repo to keep Janus up to date.
