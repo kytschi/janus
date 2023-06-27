@@ -39,8 +39,14 @@ class Whitelist extends Controller
 
     public function add(string path)
     {
-        var html, status;
+        var html, status, ip="";
         let html = this->pageTitle("Create an entry");
+
+        if (isset(_POST["ip"])) {
+            let ip = _POST["ip"];
+        } elseif (isset(_GET["ip"])) {
+            let ip = urldecode(_GET["ip"]);
+        }
 
         if (isset(_POST["save"])) {
             if (!this->validate(_POST, ["ip"])) {
@@ -99,7 +105,7 @@ class Whitelist extends Controller
                     <tr>
                         <th>IP<span class='required'>*</span></th>
                         <td>
-                            <input name='ip' type='text' value='" . (isset(_POST["ip"]) ? _POST["ip"] : "") . "'>
+                            <input name='ip' type='text' value='" . (ip ? ip : "") . "'>
                         </td>
                     </tr>
                 </tbody>
