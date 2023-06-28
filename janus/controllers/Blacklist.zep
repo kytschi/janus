@@ -308,7 +308,7 @@ class Blacklist extends Controller
                         <th width='200px'>Country</th>
                         <th>Service</th>
                         <th width='110px'>Whitelisted</th>
-                        <th class='buttons' width='140px'>
+                        <th class='buttons' width='160px'>
                             <a href='" . this->urlAddKey("/blacklist/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
                     </tr>
