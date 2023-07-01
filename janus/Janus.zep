@@ -621,7 +621,7 @@ class Janus extends Controller
         echo " Migrations complete\n";
     }
 
-    private function saveIP(pattern, matches)
+    private function saveIP(pattern, matches, ipvsix = false)
     {
         var data, country, service, whois;
 
@@ -665,7 +665,7 @@ class Janus extends Controller
 
         this->db->execute(
             "INSERT OR REPLACE INTO blacklist
-                (id, ip, country, whois, service, created_at) 
+                (id, ip, country, whois, service, ipvsix, created_at) 
             VALUES 
                 (
                     (SELECT id FROM blacklist WHERE ip=:ip),
@@ -673,6 +673,7 @@ class Janus extends Controller
                     :country,
                     :whois,
                     :service,
+                    :ipvsix, 
                     :created_at
                 )",
             [
@@ -680,6 +681,7 @@ class Janus extends Controller
                 "country": country,
                 "whois": whois,
                 "service": service,
+                "ipvsix": (ipvsix) ? 1 : 0,
                 "created_at": date("Y-m-d")
             ]
         );
@@ -762,7 +764,7 @@ class Janus extends Controller
                                     if (matches[0] == "::1") {
                                         continue;
                                     }
-                                    this->saveIP(pattern, matches);
+                                    this->saveIP(pattern, matches, true);
                                     continue;
                                 }
                             }

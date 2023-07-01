@@ -44,9 +44,11 @@ class Settings extends Controller
                     [
                         "webuser",
                         "firewall_command",
+                        "firewall_command_v6",
                         "cron_folder",
                         "firewall_cfg_folder",
-                        "firewall_cfg_file_v4"
+                        "firewall_cfg_file_v4",
+                        "firewall_cfg_file_v6"
                     ]
                 )
             ) {
