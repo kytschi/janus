@@ -1,0 +1,5 @@
+CREATE TABLE watchlist (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	ip TEXT,
+	created_at TEXT
+);

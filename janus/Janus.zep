@@ -31,6 +31,7 @@ use Janus\Controllers\Logs;
 use Janus\Controllers\Patterns;
 use Janus\Controllers\Settings;
 use Janus\Controllers\Users;
+use Janus\Controllers\Watchlist;
 use Janus\Controllers\Whitelist;
 use Janus\Exceptions\Exception;
 use Janus\Helpers\Captcha;
@@ -86,6 +87,7 @@ class Janus extends Controller
             "/scan": "scan",
             "/settings": "settings",
             "/users": "users",
+            "/watchlist": "watchlist",
             "/whitelist": "whitelist"
         ];
 
@@ -621,7 +623,7 @@ class Janus extends Controller
         echo " Migrations complete\n";
     }
 
-    private function saveIP(pattern, matches, ipvsix = false)
+    private function saveIP(pattern, ip, ipvsix)
     {
         var data, country, service, whois;
 
@@ -636,27 +638,27 @@ class Janus extends Controller
                     :category
                 )",
             [
-                "ip": matches[0],
+                "ip": ip,
                 "pattern": pattern->pattern,
                 "label": pattern->label,
                 "category": pattern->category
             ]
         );
 
-        let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
+        let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": ip]);
         if (!empty(data)) {
             return;
         }
 
         let country = "UNKNOWN";
         if (this->settings->ip_lookup) {
-            let country = this->getCountry(matches[0]);
+            let country = this->getCountry(ip);
         }
 
         let service = "UNKNOWN";
         let whois = "UNKNOWN";
         if (this->settings->service_lookup) {
-            let data = this->getService(matches[0]);
+            let data = this->getService(ip);
             let whois = data[0];
             if (data[1]) {
                 let service = data[1];
@@ -677,11 +679,40 @@ class Janus extends Controller
                     :created_at
                 )",
             [
-                "ip": matches[0],
+                "ip": ip,
                 "country": country,
                 "whois": whois,
                 "service": service,
                 "ipvsix": (ipvsix) ? 1 : 0,
+                "created_at": date("Y-m-d")
+            ]
+        );
+    }
+
+    private function saveWatch(ip, log_id, log_line)
+    {
+        var data;
+
+        let data = this->db->get("SELECT * FROM watchlist WHERE ip=:ip", ["ip": ip]);
+        if (empty(data)) {
+            return;
+        }
+
+        this->db->execute(
+            "INSERT OR REPLACE INTO watchlist_log_entries
+                (id, ip, log_id, log_line, created_at) 
+            VALUES 
+                (
+                    (SELECT id FROM watchlist_log_entries WHERE ip=:ip),
+                    :ip,
+                    :log_id,
+                    :log_line,
+                    :created_at
+                )",
+            [
+                "ip": ip,
+                "log_id": log_id,
+                "log_line": log_line,
                 "created_at": date("Y-m-d")
             ]
         );
@@ -712,7 +743,7 @@ class Janus extends Controller
             this->db->execute("UPDATE settings SET cron_running=1");
 
             var folder, dir, logs, log, lines, line, pattern, patterns = [],
-                matches, db_logs, errors = [], html;
+                matches, db_logs, errors = [], html, ipvsix, ip;
 
             let patterns = this->db->all("SELECT * FROM block_patterns");
             let db_logs = this->db->all("SELECT * FROM logs");
@@ -746,36 +777,54 @@ class Janus extends Controller
                         if (empty(line)) {
                             continue;
                         }
-                        
-                        for pattern in patterns {
-                            if (strpos(strtolower(line), strtolower(pattern->pattern)) === false) {
-                                continue;
-                            }
+                        let ip = null;
+                        let ipvsix = null;
 
+                        if (
+                            preg_match(
+                                "/([a-f0-9:]+:+)+[a-f0-9]+/",
+                                line,
+                                matches
+                            )
+                        ) {
                             if (
-                                preg_match(
-                                    "/([a-f0-9:]+:+)+[a-f0-9]+/",
-                                    line,
-                                    matches
-                                )
+                                strpos(line, "/" . matches[0]) === false &&
+                                !strtotime(matches[0]) &&
+                                substr_count($matches[0], ":") > 1
                             ) {
-                                if (strpos(line, "/" . matches[0]) === false && !strtotime(matches[0]) && substr_count($matches[0], ":") > 1) {
-                                    //Always ignore localhost, should I?
-                                    if (matches[0] == "::1") {
-                                        continue;
-                                    }
-                                    this->saveIP(pattern, matches, true);
+                                //Always ignore localhost, should I?
+                                if (matches[0] == "::1") {
                                     continue;
                                 }
+                                let ipvsix = matches[0];
+                                let ip = null;
+                                this->saveWatch(ipvsix, folder->id, line);
                             }
-                            
+                        }
+
+                        if (empty(ipvsix)) {
                             if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
                                 //Always ignore localhost.
                                 if (matches[0] == "127.0.0.1") {
                                     continue;
                                 }
+                                let ipvsix = null;
+                                let ip = matches[0];
+                                this->saveWatch(ip, folder->id, line);
+                            }
+                        }
 
-                                this->saveIP(pattern, matches);
+                        if (ipvsix || ip) {
+                            for pattern in patterns {
+                                if (strpos(strtolower(line), strtolower(pattern->pattern)) === false) {
+                                    continue;
+                                }
+
+                                if (ipvsix) {
+                                    this->saveIP(pattern, ipvsix, true);
+                                } else {
+                                    this->saveIP(pattern, ip, false);
+                                }                            
                             }
                         }
                     }
@@ -859,6 +908,13 @@ class Janus extends Controller
     {
         var controller;
         let controller = new Users();
+        return controller->router(path, this->db, this->settings);
+    }
+
+    private function watchlist(string path)
+    {
+        var controller;
+        let controller = new Watchlist();
         return controller->router(path, this->db, this->settings);
     }
 

@@ -289,6 +289,26 @@ class Logs extends Controller
                 class='mini icon icon-whitelist'>&nbsp;</a>";
         }
 
+        let found = this->db->get(
+            "SELECT * FROM watchlist WHERE ip=:ip",
+            [
+                "ip": matches[0]
+            ]
+        );
+        if (found) {
+            let html .= "<a 
+                    class='tag' 
+                    title='Added to watchlist' 
+                    href='" . this->urlAddKey("/watchlist/edit/" . found->id) . "'>
+                    <strong>Found watchlist IP: " . found->ip . "</strong>
+                </a>";
+        } else {
+            let html .= "<a 
+                title='Create a watchlist entry for IP' 
+                href='" .this->urlAddKey("/watchlist/add?ip=" . urlencode(matches[0])) ."'
+                class='mini icon icon-watchlist'>&nbsp;</a>";
+        }
+
         return html;
     }
 
