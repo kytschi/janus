@@ -1,0 +1,1 @@
+ALTER TABLE settings ADD firewall_cfg_file_v6 TEXT;

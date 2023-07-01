@@ -5,8 +5,8 @@ compile.log
 composer.lock
 vendor*
 cron/cron.sh
-cron/blacklist
-cron/whitelist
+cron/blacklist*
+cron/whitelist*
 cron/migrations/migrations.sh
 janus.db
 janus.key

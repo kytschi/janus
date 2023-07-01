@@ -1,0 +1,1 @@
+ALTER TABLE whitelist ADD ipvsix INTEGER DEFAULT (0);
