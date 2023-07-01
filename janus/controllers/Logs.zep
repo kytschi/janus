@@ -220,7 +220,7 @@ class Logs extends Controller
                                 matches
                             )
                         ) {
-                            if (strpos(line, "/" . matches[0]) === false) {
+                            if (strpos(line, "/" . matches[0]) === false && !strtotime(matches[0])) {
                                 let found = true;
                                 let html .= this->genHTML(matches);
                             }

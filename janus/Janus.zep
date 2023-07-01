@@ -759,7 +759,7 @@ class Janus extends Controller
                                     matches
                                 )
                             ) {
-                                if (strpos(line, "/" . matches[0]) === false) {
+                                if (strpos(line, "/" . matches[0]) === false && !strtotime(matches[0])) {
                                     //Always ignore localhost, should I?
                                     if (matches[0] == "::1") {
                                         continue;
