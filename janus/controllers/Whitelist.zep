@@ -39,7 +39,7 @@ class Whitelist extends Controller
 
     public function add(string path)
     {
-        var html, status, ip="";
+        var html, status, ip="", ipvsix = false, matches = [];
         let html = this->pageTitle("Create an entry");
 
         if (isset(_POST["ip"])) {
@@ -68,9 +68,19 @@ class Whitelist extends Controller
                     }
                 }
 
+                if (
+                    preg_match(
+                        "/([a-f0-9:]+:+)+[a-f0-9]+/",
+                        _POST["ip"],
+                        matches
+                    )
+                ) {
+                    let ipvsix = true;
+                }
+
                 let status = this->db->execute(
                     "INSERT OR REPLACE INTO whitelist
-                        (id, 'ip', 'country', 'service', 'whois', 'created_at') 
+                        (id, 'ip', 'country', 'service', 'whois', 'ipvsix', 'created_at') 
                     VALUES 
                         (
                             (SELECT id FROM whitelist WHERE ip=:ip),
@@ -78,6 +88,7 @@ class Whitelist extends Controller
                             :country,
                             :service,
                             :whois,
+                            :ipvsix,
                             :created_at
                         )",
                     [
@@ -85,6 +96,7 @@ class Whitelist extends Controller
                         "country": country,
                         "service": service,
                         "whois": whois,
+                        "ipvsix": (ipvsix) ? 1 : 0,
                         "created_at": date("Y-m-d")
                     ]
                 );
@@ -354,7 +366,7 @@ class Whitelist extends Controller
             var item;
             for item in data {
                 let html .= "<tr>
-                    <td>" . item->ip . "</td>
+                    <td>" . item->ip . "<br/><span class='pill'>" . (item->ipvsix ? "IPv6" : "IPv4") . "</span></td>
                     <td>" . item->country . "</td>
                     <td>" . item->service . "</td>
                     <td>" . (item->blacklisted ? "YES" : "NO") . "</td>

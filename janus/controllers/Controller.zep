@@ -179,7 +179,7 @@ class Controller
             var data, item, file;
 
             // Write the blacklist IPs for CRON.
-            let data = this->db->all("SELECT * FROM blacklist");
+            let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=0");
             let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklist", "w");
             if (!file) {
                 throw new Exception("Failed to write blacklist file for CRON");
@@ -188,12 +188,30 @@ class Controller
                 fwrite(file, item->ip. "\n");
             }
             fclose(file);
+            let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=1");
+            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklistv6", "w");
+            if (!file) {
+                throw new Exception("Failed to write blacklist V6 file for CRON");
+            }
+            for item in data {
+                fwrite(file, item->ip. "\n");
+            }
+            fclose(file);
 
             // Write the whitelist IPs for CRON.
-            let data = this->db->all("SELECT * FROM whitelist");
+            let data = this->db->all("SELECT * FROM whitelist WHERE ipvsix=0");
             let file = fopen(rtrim(this->settings->cron_folder, "/") . "/whitelist", "w");
             if (!file) {
                 throw new Exception("Failed to write whitelist file for CRON");
+            }
+            for item in data {
+                fwrite(file, item->ip . "\n");
+            }
+            fclose(file);
+            let data = this->db->all("SELECT * FROM whitelist WHERE ipvsix=1");
+            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/whitelistv6", "w");
+            if (!file) {
+                throw new Exception("Failed to write whitelist V6 file for CRON");
             }
             for item in data {
                 fwrite(file, item->ip . "\n");
@@ -219,57 +237,87 @@ chainAdd () {
     fi
 }
 
+chainAddVSIX () {
+    chain=`ip6tables -n --list INPUT | grep $1`
+    if [ -z \"$chain\" ]; then
+            # Add the chain to INPUT
+            $IPTABLESVSIX -A INPUT -j $1
+    fi
+}
+
 php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', true);\";
 
 DIR=$(dirname -- \"$0\";)
 WEBUSER=\"" . this->settings->webuser . "\"
 IPTABLES=" . this->settings->firewall_command . "
+IPTABLESVSIX=" . this->settings->firewall_command_v6 . "
 IP_BLACKLIST=$DIR/blacklist
+IP_BLACKLISTVSIX=$DIR/blacklistv6
 IP_WHITELIST=$DIR/whitelist
+IP_WHITELISTVSIX=$DIR/whitelistv6
 CONF=" . this->settings->firewall_cfg_folder . this->settings->firewall_cfg_file_v4 . "
+CONFVSIX=" . this->settings->firewall_cfg_folder . this->settings->firewall_cfg_file_v6 . "
 
 # Set the files to writeable by webuser.
 chown $WEBUSER:$WEBUSER $IP_BLACKLIST
+chown $WEBUSER:$WEBUSER $IP_BLACKLISTVSIX
 chown $WEBUSER:$WEBUSER $IP_WHITELIST
+chown $WEBUSER:$WEBUSER $IP_WHITELISTVSIX
 
 # Create the chain JANUS_BLACKLIST
 $IPTABLES -N JANUS_BLACKLIST
+$IPTABLESVSIX -N JANUS_BLACKLIST_V6
 
 # Add the chain to INPUT
 chainAdd JANUS_BLACKLIST
+chainAddVSIX JANUS_BLACKLIST_V6
             
 # Empty the chain JANUS_BLACKLIST before adding rules
 $IPTABLES -F JANUS_BLACKLIST
+$IPTABLESVSIX -F JANUS_BLACKLIST_V6
             
 # Read $IP_BLACKLIST and add IP into IPTables one by one
 /bin/egrep -v \"^#|^$|:\" $IP_BLACKLIST | sort | uniq | while read IP
 do
     $IPTABLES -A JANUS_BLACKLIST -s $IP -j DROP
 done
+# Read $IP_BLACKLISTVSIX and add IP into IPTables one by one
+/bin/egrep -v \"^#|^$\" $IP_BLACKLISTVSIX | sort | uniq | while read IP
+do
+    $IPTABLESVSIX -A JANUS_BLACKLIST_V6 -s $IP -j DROP
+done
 
 # Create the chain JANUS_WHITELIST
 $IPTABLES -N JANUS_WHITELIST
+$IPTABLESVSIX -N JANUS_WHITELIST_V6
 
 # Add the chain to INPUT
 chainAdd JANUS_WHITELIST
+chainAddVSIX JANUS_WHITELIST_V6
             
 # Empty the chain JANUS_WHITELIST before adding rules
 $IPTABLES -F JANUS_WHITELIST
+$IPTABLESVSIX -F JANUS_WHITELIST_V6
             
 # Read $IP_WHITELIST and add IP into IPTables one by one
 /bin/egrep -v \"^#|^$|:\" $IP_WHITELIST | sort | uniq | while read IP
 do
     $IPTABLES -A JANUS_WHITELIST -s $IP -j ACCEPT
 done
-
+# Read $IP_WHITELISTVSIX and add IP into IPTables one by one
+/bin/egrep -v \"^#|^$\" $IP_WHITELISTVSIX | sort | uniq | while read IP
+do
+    $IPTABLESVSIX -A JANUS_WHITELIST_V6 -s $IP -j ACCEPT
+done
             
 # Save current configuration to file
 if [ ! -d \"" . this->settings->firewall_cfg_folder . "\" ]
 then
     mkdir " . this->settings->firewall_cfg_folder . "
 fi
-$IPTABLES-save > $CONF"
-        );
+$IPTABLES-save > $CONF
+$IPTABLESVSIX-save > $CONFVSIX"
+);
         // Write the migrations.
         file_put_contents(
             rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh",

@@ -544,7 +544,7 @@ class Head extends Controller
         #tags {
             margin-bottom: 40px;
         }
-        .tag {
+        .tag, .pill {
             float: left;
             margin-right: 10px;
             margin-bottom: 10px;
@@ -559,6 +559,13 @@ class Head extends Controller
             text-decoration: none;
             line-height: 20px;
             padding: 20px 20px 10px 20px;
+        }
+        .pill {
+            border-radius: 20px;
+            font-size: 10pt;
+            border: 1px solid var(--button-border-colour);
+            padding: 10px 10px 5px 10px;
+            text-transform: none;
         }
         .tag strong {
             text-transform: none !important;

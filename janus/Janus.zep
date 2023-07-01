@@ -621,6 +621,70 @@ class Janus extends Controller
         echo " Migrations complete\n";
     }
 
+    private function saveIP(pattern, matches)
+    {
+        var data, country, service, whois;
+
+        this->db->execute(
+            "INSERT INTO found_block_patterns
+                (ip, pattern, label, category) 
+            VALUES 
+                (
+                    :ip,
+                    :pattern,
+                    :label,
+                    :category
+                )",
+            [
+                "ip": matches[0],
+                "pattern": pattern->pattern,
+                "label": pattern->label,
+                "category": pattern->category
+            ]
+        );
+
+        let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
+        if (!empty(data)) {
+            return;
+        }
+
+        let country = "UNKNOWN";
+        if (this->settings->ip_lookup) {
+            let country = this->getCountry(matches[0]);
+        }
+
+        let service = "UNKNOWN";
+        let whois = "UNKNOWN";
+        if (this->settings->service_lookup) {
+            let data = this->getService(matches[0]);
+            let whois = data[0];
+            if (data[1]) {
+                let service = data[1];
+            }
+        }
+
+        this->db->execute(
+            "INSERT OR REPLACE INTO blacklist
+                (id, ip, country, whois, service, created_at) 
+            VALUES 
+                (
+                    (SELECT id FROM blacklist WHERE ip=:ip),
+                    :ip,
+                    :country,
+                    :whois,
+                    :service,
+                    :created_at
+                )",
+            [
+                "ip": matches[0],
+                "country": country,
+                "whois": whois,
+                "service": service,
+                "created_at": date("Y-m-d")
+            ]
+        );
+    }
+
     private function scan(string path, bool cron = false)
     {
         if (this->settings->cron_running && !cron) {
@@ -646,7 +710,7 @@ class Janus extends Controller
             this->db->execute("UPDATE settings SET cron_running=1");
 
             var folder, dir, logs, log, lines, line, pattern, patterns = [],
-                matches, db_logs, data, country, service, whois, errors = [], html;
+                matches, db_logs, errors = [], html;
 
             let patterns = this->db->all("SELECT * FROM block_patterns");
             let db_logs = this->db->all("SELECT * FROM logs");
@@ -686,70 +750,30 @@ class Janus extends Controller
                                 continue;
                             }
 
+                            if (
+                                preg_match(
+                                    "/([a-f0-9:]+:+)+[a-f0-9]+/",
+                                    line,
+                                    matches
+                                )
+                            ) {
+                                if (strpos(line, "/" . matches[0]) === false) {
+                                    //Always ignore localhost, should I?
+                                    if (matches[0] == "::1") {
+                                        continue;
+                                    }
+                                    this->saveIP(pattern, matches);
+                                    continue;
+                                }
+                            }
+                            
                             if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
                                 //Always ignore localhost.
                                 if (matches[0] == "127.0.0.1") {
                                     continue;
                                 }
 
-                                this->db->execute(
-                                    "INSERT INTO found_block_patterns
-                                        (ip, pattern, label, category) 
-                                    VALUES 
-                                        (
-                                            :ip,
-                                            :pattern,
-                                            :label,
-                                            :category
-                                        )",
-                                    [
-                                        "ip": matches[0],
-                                        "pattern": pattern->pattern,
-                                        "label": pattern->label,
-                                        "category": pattern->category
-                                    ]
-                                );
-
-                                let data = this->db->get("SELECT * FROM whitelist WHERE ip=:ip", ["ip": matches[0]]);
-                                if (!empty(data)) {
-                                    continue;
-                                }
-
-                                let country = "UNKNOWN";
-                                if (this->settings->ip_lookup) {
-                                    let country = this->getCountry(matches[0]);
-                                }
-
-                                let service = "UNKNOWN";
-                                let whois = "UNKNOWN";
-                                if (this->settings->service_lookup) {
-                                    let data = this->getService(matches[0]);
-                                    let whois = data[0];
-                                    if (data[1]) {
-                                        let service = data[1];
-                                    }
-                                }
-
-                                this->db->execute(
-                                    "INSERT OR REPLACE INTO blacklist
-                                        (id, ip, country, whois, service, created_at) 
-                                    VALUES 
-                                        (
-                                            (SELECT id FROM blacklist WHERE ip=:ip),
-                                            :ip,
-                                            :country,
-                                            :whois,
-                                            :service,
-                                            :created_at
-                                        )",
-                                    [
-                                        "ip": matches[0],
-                                        "country": country,
-                                        "whois": whois,
-                                        "service": service,
-                                        "created_at": date("Y-m-d")
-                                    ]
-                                );
+                                this->saveIP(pattern, matches);
                             }
                         }
                     }

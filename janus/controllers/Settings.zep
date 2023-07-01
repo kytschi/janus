@@ -60,16 +60,20 @@ class Settings extends Controller
                         ip_lookup=:ip_lookup,
                         service_lookup=:service_lookup,
                         firewall_command=:firewall_command,
+                        firewall_command_v6=:firewall_command_v6,
                         firewall_cfg_folder=:firewall_cfg_folder,
                         firewall_cfg_file_v4=:firewall_cfg_file_v4,
+                        firewall_cfg_file_v6=:firewall_cfg_file_v6,
                         cron_folder=:cron_folder",
                     [
                         "webuser": _POST["webuser"],
                         "ip_lookup": isset(_POST["ip_lookup"]) ? 1 : 0,
                         "service_lookup": isset(_POST["service_lookup"]) ? 1 : 0,
                         "firewall_command": _POST["firewall_command"],
+                        "firewall_command_v6": _POST["firewall_command_v6"],
                         "firewall_cfg_folder": rtrim(_POST["firewall_cfg_folder"], "/") . "/",
                         "firewall_cfg_file_v4": _POST["firewall_cfg_file_v4"],
+                        "firewall_cfg_file_v6": _POST["firewall_cfg_file_v6"],
                         "cron_folder": _POST["cron_folder"]
                     ]
                 );
@@ -78,6 +82,13 @@ class Settings extends Controller
                     throw new Exception(status);
                 }
                 let html .= this->info("Settings updated");
+                let this->settings = this->db->get("
+                    SELECT
+                        *,
+                        '" . this->settings->db_file . "' AS db_file, 
+                        '" . this->settings->url_key_file . "' AS url_key_file, 
+                        '" . this->settings->url_key . "' AS url_key  
+                    FROM settings LIMIT 1");
                 this->writeCronFiles();
             }
         } elseif (isset(_POST["reset_cron"])) {
@@ -144,12 +155,21 @@ class Settings extends Controller
                         </td>
                     </tr>
                     <tr>
-                        <th>Firewall command<span class='required'>*</span></th>
+                        <th>Firewall command for IPv4<span class='required'>*</span></th>
                         <td>
                             <input 
                                 name='firewall_command'
                                 type='text'
                                 value='" . (isset(_POST["firewall_command"]) ? _POST["firewall_command"] : data->firewall_command) . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Firewall command for IPv6<span class='required'>*</span></th>
+                        <td>
+                            <input 
+                                name='firewall_command_v6'
+                                type='text'
+                                value='" . (isset(_POST["firewall_command_v6"]) ? _POST["firewall_command_v6"] : data->firewall_command_v6) . "'>
                         </td>
                     </tr>
                     <tr>
@@ -168,6 +188,15 @@ class Settings extends Controller
                                 name='firewall_cfg_file_v4'
                                 type='text'
                                 value='" . (isset(_POST["firewall_cfg_file_v4"]) ? _POST["firewall_cfg_file_v4"] : data->firewall_cfg_file_v4) . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Firewall cfg file for IPv6<span class='required'>*</span></th>
+                        <td>
+                            <input 
+                                name='firewall_cfg_file_v6'
+                                type='text'
+                                value='" . (isset(_POST["firewall_cfg_file_v6"]) ? _POST["firewall_cfg_file_v6"] : data->firewall_cfg_file_v6) . "'>
                         </td>
                     </tr>
                 </tbody>
