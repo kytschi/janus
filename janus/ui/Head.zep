@@ -567,6 +567,9 @@ class Head extends Controller
             padding: 10px 10px 5px 10px;
             text-transform: none;
         }
+        .pill-red {
+            background-color: var(--box-warning-background-colour);
+        }
         .tag strong {
             text-transform: none !important;
         }

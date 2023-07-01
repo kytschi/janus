@@ -354,9 +354,7 @@ class Whitelist extends Controller
                 <thead>
                     <tr>
                         <th width='200px'>IP</th>
-                        <th>Country</th>
-                        <th>Service</th>
-                        <th>Blacklisted</th>
+                        <th>Info</th>
                         <th class='buttons' width='140px'>
                             <a href='" . this->urlAddKey("/whitelist/add") . "' class='mini icon icon-add' title='Create an entry'>&nbsp;</a>
                         </th>
@@ -366,10 +364,12 @@ class Whitelist extends Controller
             var item;
             for item in data {
                 let html .= "<tr>
-                    <td>" . item->ip . "<br/><span class='pill'>" . (item->ipvsix ? "IPv6" : "IPv4") . "</span></td>
-                    <td>" . item->country . "</td>
-                    <td>" . item->service . "</td>
-                    <td>" . (item->blacklisted ? "YES" : "NO") . "</td>
+                    <td>" . item->ip .
+                        "<p style='margin:0 !important'><span class='pill'>" . (item->ipvsix ? "IPv6" : "IPv4") . "</span>
+                        " . (item->blacklisted ? "<span class='pill pill-red'>blacklisted</span>" : "") . "</p>
+                    </td>
+                    <td>" . (item->country != "UNKNOWN" ? "<p>" . item->country . "</p>" : "") .
+                        "<p>" . item->service . "</p></td>
                     <td class='buttons'>
                         <a href='" . this->urlAddKey("/whitelist/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
                         <a href='" . this->urlAddKey("/whitelist/black/" . item->id) . "' class='mini icon icon-blacklist' title='Blacklist the entry'>&nbsp;</a>
