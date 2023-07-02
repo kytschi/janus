@@ -457,8 +457,7 @@ class Watchlist extends Controller
                     <td>" . (item->country != "UNKNOWN" ? "<p>" . item->country . "</p>" : "") .
                         "<p>" . item->service . "</p></td>
                     <td class='buttons'>
-                        <a href='" . this->urlAddKey("/watchlist/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
-                        <a href='" . this->urlAddKey("/watchlist/white/" . item->id) . "' class='mini icon icon-whitelist' title='Whitelist the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/watchlist/edit/" . item->id) . "' class='mini icon icon-edit' title='View/Edit the entry'>&nbsp;</a>
                         <a href='" . this->urlAddKey("/watchlist/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
                 </tr>";

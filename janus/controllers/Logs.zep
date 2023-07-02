@@ -368,7 +368,7 @@ class Logs extends Controller
                 let html .= "<tr>
                     <td>" . item->log . "</td>
                     <td class='buttons'>
-                        <a href='" . this->urlAddKey("/logs/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/logs/edit/" . item->id) . "' class='mini icon icon-edit' title='View/Edit the entry'>&nbsp;</a>
                         <a href='" . this->urlAddKey("/logs/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
                 </tr>";

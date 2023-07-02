@@ -371,7 +371,7 @@ class Whitelist extends Controller
                     <td>" . (item->country != "UNKNOWN" ? "<p>" . item->country . "</p>" : "") .
                         "<p>" . item->service . "</p></td>
                     <td class='buttons'>
-                        <a href='" . this->urlAddKey("/whitelist/edit/" . item->id) . "' class='mini icon icon-edit' title='Edit the entry'>&nbsp;</a>
+                        <a href='" . this->urlAddKey("/whitelist/edit/" . item->id) . "' class='mini icon icon-edit' title='View/Edit the entry'>&nbsp;</a>
                         <a href='" . this->urlAddKey("/whitelist/black/" . item->id) . "' class='mini icon icon-blacklist' title='Blacklist the entry'>&nbsp;</a>
                         <a href='" . this->urlAddKey("/whitelist/delete/" . item->id) . "' class='mini icon icon-delete' title='Delete the entry'>&nbsp;</a>
                     </td>
