@@ -197,7 +197,7 @@ class Logs extends Controller
                         }
                         let html .= "<tr><td>";
                         if (found) {
-                            let html .= "<p class='log-output'>" . line . "</p>
+                            let html .= "<p class='log-output'>" . htmlentities(line) . "</p>
                                 <a 
                                     class='tag' 
                                     title='Found the pattern in Janus'
@@ -205,7 +205,7 @@ class Logs extends Controller
                                     <strong>Found pattern: " . found->pattern . "</strong>
                                 </a>";
                         } else {
-                            let html .= "<p class='log-output'>" . line . "</p>
+                            let html .= "<p class='log-output'>" . htmlentities(line) . "</p>
                                 <a 
                                     title='Create a pattern from line' 
                                     href='" .this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) ."'

@@ -341,7 +341,7 @@ class Watchlist extends Controller
                 }
                 let html .= "<tr><td>";
                 if (found) {
-                    let html .= "<p class='log-output'>" . item->log_line . "</p>
+                    let html .= "<p class='log-output'>" . htmlentities(item->log_line) . "</p>
                         <a 
                             class='tag' 
                             title='Found the pattern in Janus'
@@ -349,7 +349,7 @@ class Watchlist extends Controller
                             <strong>Found pattern: " . found->pattern . "</strong>
                         </a>";
                 } else {
-                    let html .= "<p class='log-output'>" . item->log_line . "</p>
+                    let html .= "<p class='log-output'>" . htmlentities(item->log_line) . "</p>
                         <a 
                             title='Create a pattern from line' 
                             href='" .this->urlAddKey("/patterns/add?watchlist=" . item->id) ."'
