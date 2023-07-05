@@ -73,6 +73,8 @@ class Janus extends Controller
         
         if (session_status() === 1) {
             session_name("janus");
+            ini_set("session.gc_maxlifetime", 900);
+            ini_set("session.cookie_lifetime", 900);
             session_start();
         }
 
@@ -156,6 +158,13 @@ class Janus extends Controller
                             <th>Whitelisted</th>
                             <td>";
             let data = this->db->get("SELECT COUNT(id) AS total FROM whitelist");
+            let html .= (data) ? data->total : 0;
+            let html .= "</td>
+                        </tr>
+                        <tr>
+                            <th>Watching</th>
+                            <td>";
+            let data = this->db->get("SELECT COUNT(id) AS total FROM watchlist");
             let html .= (data) ? data->total : 0;
             let html .= "</td>
                         </tr>

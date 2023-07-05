@@ -329,7 +329,6 @@ class Logs extends Controller
         let query .= " ORDER BY log";
 
         let data = this->db->all(query, vars);
-        
         if (count(data)) {
             let html .= "
                 <form action='" . this->urlAddKey("/logs") . "' method='post'>
