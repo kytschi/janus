@@ -712,7 +712,7 @@ class Janus extends Controller
                 (id, ip, log_id, log_line, created_at) 
             VALUES 
                 (
-                    (SELECT id FROM watchlist_log_entries WHERE ip=:ip),
+                    (SELECT id FROM watchlist_log_entries WHERE ip=:ip AND log_line=:log_line),
                     :ip,
                     :log_id,
                     :log_line,
