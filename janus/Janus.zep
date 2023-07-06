@@ -164,8 +164,12 @@ class Janus extends Controller
                         <tr>
                             <th>Watching</th>
                             <td>";
-            let data = this->db->get("SELECT COUNT(id) AS total FROM watchlist");
-            let html .= (data) ? data->total : 0;
+            try {
+                let data = this->db->get("SELECT COUNT(id) AS total FROM watchlist");
+                let html .= (data) ? data->total : 0;
+            } catch \Exception, data {
+                let html .= "<strong>PLEASE RUN MIGRATIONS</strong>";
+            }
             let html .= "</td>
                         </tr>
                         <tr>
