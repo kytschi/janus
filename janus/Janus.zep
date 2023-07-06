@@ -80,7 +80,7 @@ class Janus extends Controller
 
         var routes = [
             "/dashboard": "dashboard",
-            "/blacklist": "blacklist",
+            "/blacklist": "blacklist",            
             "/logout": "logout",
             "/logs": "logs",
             "/patterns": "patterns",
@@ -88,6 +88,7 @@ class Janus extends Controller
             "/scan-warn": "scanWarn",
             "/scan": "scan",
             "/settings": "settings",
+            "/updates-available": "updatesAvailable",
             "/users": "users",
             "/watchlist": "watchlist",
             "/whitelist": "whitelist"
@@ -112,6 +113,34 @@ class Janus extends Controller
         } else {
             let logged_in = true;
             let code = 200;
+        }
+
+        try {
+            let route = this->db->get("SELECT * FROM migrations");
+            if (empty(route)) {
+                throw new \Exception("Run migrations");
+            }
+
+            let parsed = shell_exec("ls " . rtrim(this->settings->cron_folder, "/") . "/migrations/*.sql");
+            let output = explode("\n", parsed);
+            for func in output {
+                if (empty(func)) {
+                    continue;
+                }
+                let route = this->db->get(
+                    "SELECT * FROM migrations WHERE migration = :migration",
+                    [
+                        "migration": basename(func)
+                    ]
+                );
+                
+                if (empty(route)) {
+                    var_dump(basename(func));
+                    throw new \Exception("Run migrations");
+                }
+            }
+        } catch \Exception, route {
+            let path = this->urlAddKey("/updates-available");
         }
 
         for route, func in routes {
@@ -915,6 +944,18 @@ class Janus extends Controller
         var controller;
         let controller = new Settings();
         return controller->router(path, this->db, this->settings);
+    }
+
+    private function updatesAvailable(string path)
+    {
+        return this->pageTitle("Updates Available") . "
+        <div class='row'>
+            <div class='box'>
+                <div class='box-body'>
+                    Please run the migrations script before proceeding
+                </div>
+            </div>
+        </div>";
     }
 
     private function users(string path)
