@@ -11,6 +11,7 @@ Make sure to carefully build your whitelist so not to block valid services or se
 ## Requirements
 * PHP 7.4 or 8+
 * PHP-SQLite
+* PHP-GD
 * iptables, IPv6 has been added but the pattern parsing is a pain and it might result in invalid matches.
 * nginx (plan to add more support)
 * geoiplookup (OPTIONAL, only if you want to lookup the country of origin)

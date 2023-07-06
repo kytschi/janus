@@ -59,7 +59,7 @@ class Captcha
             let letter = imagecrop(
                 src,
                 [
-                    "x": (key * $width),
+                    "x": (key * width),
                     "y": 0,
                     "width": width,
                     "height": height
@@ -68,7 +68,7 @@ class Captcha
             imagealphablending(letter, false);
             imagesavealpha(letter, true);
 
-            imagecopy(image, letter, width * $iLoop, 0, 0, 0, width, height);
+            imagecopy(image, letter, width * iLoop, 0, 0, 0, width, height);
             let iLoop += 1;
         }
 
