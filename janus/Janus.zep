@@ -135,11 +135,13 @@ class Janus extends Controller
                 );
                 
                 if (empty(route)) {
-                    var_dump(basename(func));
                     throw new \Exception("Run migrations");
                 }
             }
         } catch \Exception, route {
+            if (!file_exists(rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh")) {
+                this->writeMigrations();
+            }
             let path = this->urlAddKey("/updates-available");
         }
 

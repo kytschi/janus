@@ -318,16 +318,21 @@ fi
 $IPTABLES-save > $CONF
 $IPTABLESVSIX-save > $CONFVSIX"
 );
-        // Write the migrations.
+            // Write the migrations.
+            this->writeMigrations();
+        } catch \Exception, err {
+            throw new Exception("Failed to write the cron.sh, " . err->getMessage());
+        }
+    }
+
+    public function writeMigrations()
+    {
         file_put_contents(
             rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh",
-            "#!/bin/bash
+        "#!/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
 
 php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', false, true);\";"
         );
-        } catch \Exception, err {
-            throw new Exception("Failed to write the cron.sh, " . err->getMessage());
-        }
     }
 }
