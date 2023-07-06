@@ -67,6 +67,33 @@ class Controller
         return "UNKNOWN";
     }
 
+    public function getIPVSIX(string line)
+    {
+        var ip, matches;
+
+        preg_match_all(
+            "/([a-f0-9:]+:+)+[a-f0-9]+/",
+            line,
+            matches
+        );
+        
+        if (empty(matches[0])) {
+            return null;
+        }
+
+        for ip in matches[0] {
+            if (
+                strpos(line, "/" . ip) === false &&
+                !strtotime(ip) &&
+                substr_count(ip, ":") > 1
+            ) {
+                return ip;
+            }
+        }
+
+        return null;
+    }
+
     public function getService(ip)
     {
         var output, line, lines, netname = null;

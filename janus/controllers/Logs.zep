@@ -212,23 +212,11 @@ class Logs extends Controller
                                     class='mini icon icon-patterns'>&nbsp;</a>";
                         }
 
-                        let found = false;
-                        if (
-                            preg_match(
-                                "/([a-f0-9:]+:+)+[a-f0-9]+/",
-                                line,
-                                matches
-                            )
-                        ) {
-                            if (strpos(line, "/" . matches[0]) === false && !strtotime(matches[0]) && substr_count($matches[0], ":") > 1) {
-                                let found = true;
-                                let html .= this->genHTML(matches);
-                            }
-                        }
-                        if (!found) {
-                            if (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
-                                let html .= this->genHTML(matches);
-                            }
+                        let found = this->getIPVSIX(line);
+                        if (found) {
+                            let html .= this->genHTML(found);
+                        } elseif (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
+                            let html .= this->genHTML(matches[0]);
                         }
                         let html .= "</td></tr>";
                     }
@@ -245,14 +233,14 @@ class Logs extends Controller
         return html;
     }
 
-    private function genHTML(matches)
+    private function genHTML(ip)
     {
         var html, found;
 
         let found = this->db->get(
             "SELECT * FROM blacklist WHERE ip=:ip",
             [
-                "ip": matches[0]
+                "ip": ip
             ]
         );
         if (found) {
@@ -265,14 +253,14 @@ class Logs extends Controller
         } else {
             let html .= "<a 
                 title='Create a blacklist entry for IP' 
-                href='" .this->urlAddKey("/blacklist/add?ip=" . urlencode(matches[0])) ."'
+                href='" .this->urlAddKey("/blacklist/add?ip=" . urlencode(ip)) . "'
                 class='mini icon icon-blacklist'>&nbsp;</a>";
         }
 
         let found = this->db->get(
             "SELECT * FROM whitelist WHERE ip=:ip",
             [
-                "ip": matches[0]
+                "ip": ip
             ]
         );
         if (found) {
@@ -285,14 +273,14 @@ class Logs extends Controller
         } else {
             let html .= "<a 
                 title='Create a whitelist entry for IP' 
-                href='" .this->urlAddKey("/whitelist/add?ip=" . urlencode(matches[0])) ."'
+                href='" .this->urlAddKey("/whitelist/add?ip=" . urlencode(ip)) . "'
                 class='mini icon icon-whitelist'>&nbsp;</a>";
         }
 
         let found = this->db->get(
             "SELECT * FROM watchlist WHERE ip=:ip",
             [
-                "ip": matches[0]
+                "ip": ip
             ]
         );
         if (found) {
@@ -305,7 +293,7 @@ class Logs extends Controller
         } else {
             let html .= "<a 
                 title='Create a watchlist entry for IP' 
-                href='" .this->urlAddKey("/watchlist/add?ip=" . urlencode(matches[0])) ."'
+                href='" .this->urlAddKey("/watchlist/add?ip=" . urlencode(ip)) . "'
                 class='mini icon icon-watchlist'>&nbsp;</a>";
         }
 

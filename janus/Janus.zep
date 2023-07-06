@@ -831,16 +831,12 @@ class Janus extends Controller
                                 matches
                             )
                         ) {
-                            if (
-                                strpos(line, "/" . matches[0]) === false &&
-                                !strtotime(matches[0]) &&
-                                substr_count($matches[0], ":") > 1
-                            ) {
+                            let ipvsix = this->getIPVSIX(line);
+                            if (ipvsix) {
                                 //Always ignore localhost, should I?
-                                if (matches[0] == "::1") {
+                                if (ipvsix == "::1") {
                                     continue;
                                 }
-                                let ipvsix = matches[0];
                                 let ip = null;
                                 this->saveWatch(ipvsix, folder->id, line);
                             }
