@@ -256,8 +256,15 @@ class Controller
                 "# !/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
 
+php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', true);\";
+
+DIR=$(dirname -- \"$0\";)
+WEBUSER=\"" . this->settings->webuser . "\"
+IPTABLES=" . this->settings->firewall_command . "
+IPTABLESVSIX=" . this->settings->firewall_command_v6 . "
+
 chainAdd () {
-    chain=`iptables -n --list INPUT | grep $1`
+    chain=`$IPTABLES -n --list INPUT | grep $1`
     if [ -z \"$chain\" ]; then
             # Add the chain to INPUT
             $IPTABLES -A INPUT -j $1
@@ -265,19 +272,13 @@ chainAdd () {
 }
 
 chainAddVSIX () {
-    chain=`ip6tables -n --list INPUT | grep $1`
+    chain=`$IPTABLESVSIX -n --list INPUT | grep $1`
     if [ -z \"$chain\" ]; then
             # Add the chain to INPUT
             $IPTABLESVSIX -A INPUT -j $1
     fi
 }
 
-php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', true);\";
-
-DIR=$(dirname -- \"$0\";)
-WEBUSER=\"" . this->settings->webuser . "\"
-IPTABLES=" . this->settings->firewall_command . "
-IPTABLESVSIX=" . this->settings->firewall_command_v6 . "
 IP_BLACKLIST=$DIR/blacklist
 IP_BLACKLISTVSIX=$DIR/blacklistv6
 IP_WHITELIST=$DIR/whitelist
@@ -292,8 +293,8 @@ chown $WEBUSER:$WEBUSER $IP_WHITELIST
 chown $WEBUSER:$WEBUSER $IP_WHITELISTVSIX
 
 # Create the chain JANUS_BLACKLIST
-$IPTABLES -N JANUS_BLACKLIST
-$IPTABLESVSIX -N JANUS_BLACKLIST_V6
+$IPTABLES -N JANUS_BLACKLIST > /dev/null
+$IPTABLESVSIX -N JANUS_BLACKLIST_V6 > /dev/null
 
 # Add the chain to INPUT
 chainAdd JANUS_BLACKLIST
@@ -315,8 +316,8 @@ do
 done
 
 # Create the chain JANUS_WHITELIST
-$IPTABLES -N JANUS_WHITELIST
-$IPTABLESVSIX -N JANUS_WHITELIST_V6
+$IPTABLES -N JANUS_WHITELIST > /dev/null
+$IPTABLESVSIX -N JANUS_WHITELIST_V6 > /dev/null
 
 # Add the chain to INPUT
 chainAdd JANUS_WHITELIST
