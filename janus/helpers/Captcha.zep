@@ -29,7 +29,7 @@ class Captcha
     public function draw()
     {
 		var width, height, image, src, trans_colour, length,
-            iLoop, data, letter, image_data, keyspace, key, captcha, line_color,
+            iLoop, data, image_data, keyspace, key, captcha, line_color,
             image_width, image_height;
 
         let keyspace = ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "x", "y", "z"];
@@ -38,7 +38,7 @@ class Captcha
         let src = imagecreatefromstring(base64_decode(data));
         imagealphablending(src, false);
         imagesavealpha(src, true);
-
+    
         let length = 6;
         let width = 40;
         let height = 54;
@@ -49,6 +49,7 @@ class Captcha
         imagesavealpha(image, true);
         let trans_colour = imagecolorallocatealpha(image, 0, 0, 0, 127);
         imagefill(image, 0, 0, trans_colour);
+        imagefill(src, 0, 0, trans_colour);
 
         let iLoop = 0;
         let key = 0;
@@ -56,19 +57,7 @@ class Captcha
         while (iLoop < length) {
             let key = rand(0, count(keyspace) - 1);
             let captcha .= keyspace[key];
-            let letter = imagecrop(
-                src,
-                [
-                    "x": (key * width),
-                    "y": 0,
-                    "width": width,
-                    "height": height
-                ]
-            );
-            imagealphablending(letter, false);
-            imagesavealpha(letter, true);
-
-            imagecopy(image, letter, width * iLoop, 0, 0, 0, width, height);
+            imagecopy(image, src, width * iLoop, 0, key * width, 0, width, height);
             let iLoop += 1;
         }
 
@@ -84,6 +73,7 @@ class Captcha
         let image_data = ob_get_contents();
         ob_end_clean();
         imagedestroy(image);
+        imagedestroy(src);
 
         mt_srand(mt_rand(100000, 999999));
 		
