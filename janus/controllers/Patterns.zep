@@ -218,19 +218,25 @@ class Patterns extends Controller
                     <tr>
                         <th>Label<span class='required'>*</span></th>
                         <td>
-                            <input name='label' type='text' value='" . (isset(_POST["label"]) ? _POST["label"] : data->label) . "'>
+                            <input name='label' type='text' value='" . 
+                                (isset(_POST["label"]) ? _POST["label"] : htmlentities(data->label)) .
+                            "'>
                         </td>
                     </tr>
                     <tr>
                         <th>Pattern<span class='required'>*</span></th>
                         <td>
-                            <input name='pattern' type='text' value='" . (isset(_POST["pattern"]) ? _POST["pattern"] : data->pattern) . "'>
+                            <input name='pattern' type='text' value='" . 
+                                (isset(_POST["pattern"]) ? _POST["pattern"] : htmlentities(data->pattern)) 
+                            . "'>
                         </td>
                     </tr>
                     <tr>
                         <th>Category</th>
                         <td>
-                            <input name='category' type='text' value='" . (isset(_POST["category"]) ? _POST["category"] : data->category) . "'>
+                            <input name='category' type='text' value='" . 
+                                (isset(_POST["category"]) ? _POST["category"] : htmlentities(data->category)) . 
+                            "'>
                         </td>
                     </tr>
                 </tbody>
