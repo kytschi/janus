@@ -149,12 +149,12 @@ class Controller
             </div></div>";
     }
 
-    public function pageTitle(string title)
+    public function pageTitle(string title, bool toolbar = true)
     {
         var head;
         let head = new Head(this->settings);
 
-        return "<h1><span>" . title . "</span></h1>" . head->toolbar();
+        return "<h1><span>" . title . "</span></h1>" . (toolbar ? head->toolbar() : "");
     }
 
     public function redirect(string url)

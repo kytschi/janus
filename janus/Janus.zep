@@ -946,7 +946,7 @@ class Janus extends Controller
 
     private function updatesAvailable(string path)
     {
-        return this->pageTitle("Updates Available") . "
+        return this->pageTitle("Updates Available", false) . "
         <div class='row'>
             <div class='box'>
                 <div class='box-body'>

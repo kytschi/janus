@@ -180,7 +180,7 @@ class Patterns extends Controller
                 "id": this->cleanUrl(path, "/patterns/edit/")
             ]
         );
-
+        
         if (empty(data)) {
             throw new Exception("Entry not found");
         }
