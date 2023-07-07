@@ -274,7 +274,12 @@ class Patterns extends Controller
         header("Content-Disposition: attachment; filename=janus_" . date("Y_m_d_H_i_s") . ".jim");
         echo "INSERT OR REPLACE INTO block_patterns (id, 'pattern', 'label', 'category') VALUES";
         for iLoop, item in data {
-            echo "\n((SELECT id FROM block_patterns WHERE pattern='" . item->pattern . "'), '" . item->pattern . "', '" . item->label . "', '" . item->category . "')";
+            echo "\n(
+                (SELECT id FROM block_patterns WHERE pattern=\"" . item->pattern . "\"), 
+                \"" . addslashes(item->pattern) . "\", 
+                \"" . addslashes(item->label) . "\", 
+                \"" . addslashes(item->category) . "\"
+            )";
             if (iLoop < count(data) - 1) {
                 echo ",";
             }
