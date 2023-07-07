@@ -13,7 +13,7 @@ Make sure to carefully build your whitelist so not to block valid services or se
 * PHP-SQLite
 * PHP-GD
 * iptables, IPv6 has been added but the pattern parsing is a pain and it might result in invalid matches.
-* nginx (plan to add more support)
+* any log with URLs and IPs.
 * geoiplookup (OPTIONAL, only if you want to lookup the country of origin)
 * whois (OPTIONAL, only if you want to lookup the service)
 
@@ -78,7 +78,7 @@ Once you've saved your settings, Janus should have written a `cron.sh` file in t
 
 Now set yourself a `cron` up to trigger the `cron.sh` at a time that suits you. Something like,
 ```sh
-0 4 * * * sh /var/www/janus/cron/cron.sh
+0 4 * * * sh /var/www/janus/cron/cron.sh > /dev/null 2>&1
 ```
 
 Depending on how often you run the cron, I'd recommend that you watch the previous days logs and make sure you log rotate accordingly. This way you'll be blocking suspicious activing from the day before rather than on the day. Of course if your watching the logs faster than every 24hrs then use the current day's logs. This I just find this a good way of teaching the system what to watch for a block pattern without removing those suspicious requests too fast.
@@ -95,6 +95,9 @@ Either git pull, clone or download the latest from the repo to keep Janus up to 
 To update the database with the latest migrations, make sure the webserver user can write to the `migrations` folder in the `cron` folder and go to `settings` in Janus and click save.
 
 This will create a bash script called `migrations.sh` simply run this from your terminal and any new migrations will be executed. The `migrations.sh` is located in the `cron/migrations` folder.
+
+## Logs
+I've managed to test this with nginx, apache, ssh and mail logs. So far it's managed to find the pattern and IPs from them. If your find it's not working for your logs either open an issue with a sample of your log (DONT SHARE SENSITIVE INFO) or drop me a message at dev@kytschi.com and I'll see if I can sort it.
 
 ## Credits
 Janus background - Deep Ellum Janus, by Dan Colcer (Transylvania, Romania @dcolcerart) was painted in 2016.
