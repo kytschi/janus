@@ -1,0 +1,1 @@
+ALTER TABLE blacklist ADD note TEXT;

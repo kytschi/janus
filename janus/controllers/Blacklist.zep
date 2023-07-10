@@ -80,7 +80,16 @@ class Blacklist extends Controller
 
                 let status = this->db->execute(
                     "INSERT OR REPLACE INTO blacklist
-                        (id, 'ip', 'country', 'service', 'whois', 'ipvsix', 'created_at') 
+                        (
+                            id,
+                            'ip',
+                            'country',
+                            'service',
+                            'whois',
+                            'ipvsix',
+                            'created_at',
+                            'note'
+                        ) 
                     VALUES 
                         (
                             (SELECT id FROM blacklist WHERE ip=:ip),
@@ -89,7 +98,8 @@ class Blacklist extends Controller
                             :service,
                             :whois,
                             :ipvsix,
-                            :created_at
+                            :created_at,
+                            :note
                         )",
                     [
                         "ip": _POST["ip"],
@@ -97,7 +107,8 @@ class Blacklist extends Controller
                         "service": service,
                         "whois": whois,
                         "ipvsix": (ipvsix) ? 1 : 0,
-                        "created_at": date("Y-m-d")
+                        "created_at": date("Y-m-d"),
+                        "note": isset(_POST["note"]) ? _POST["note"] : ""
                     ]
                 );
 
@@ -115,9 +126,15 @@ class Blacklist extends Controller
             <table class='table wfull'>
                 <tbody>
                     <tr>
-                        <th>IP</th>
+                        <th>IP<span class='required'>*</span></th>
                         <td>
                             <input name='ip' type='text' value='" . (ip ? ip : "") . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Note</th>
+                        <td>
+                            <textarea name='note' rows='6'>" . (isset(_POST["note"]) ? _POST["note"] : "") . "</textarea>
                         </td>
                     </tr>
                 </tbody>
@@ -161,7 +178,7 @@ class Blacklist extends Controller
 
     public function edit(string path)
     {
-        var html, data;
+        var html, data, status;
         let html = this->pageTitle("Blacklisted IP");
 
         let data = this->db->get(
@@ -175,33 +192,66 @@ class Blacklist extends Controller
             throw new Exception("Entry not found");
         }
 
+        if (isset(_POST["save"])) {
+            let status = this->db->execute(
+                "UPDATE blacklist SET
+                    note=:note
+                WHERE
+                    id=:id",
+                [
+                    "id": data->id,
+                    "note": isset(_POST["note"]) ? _POST["note"] : ""
+                ]
+            );
+
+            if (!is_bool(status)) {
+                throw new Exception(status);
+            }
+            let html .= this->info("Entry updated");
+        }
+
         let html .= "
-        <table class='table wfull'>
-            <tbody>
-                <tr>
-                    <th>IP</th>
-                    <td>" . data->ip . "</td>
-                </tr>
-                <tr>
-                    <th>Created at</th>
-                    <td>" . (data->created_at ? Date("d/m/Y", strtotime(data->created_at)) : "Unknown") . "</td>
-                </tr>
-                <tr>
-                    <th>Country</th>
-                    <td>" . data->country . "</td>
-                </tr>
-                <tr>
-                    <th>Service</th>
-                    <td>" . data->service . "</td>
-                </tr>
-                <tr>
-                    <th colspan='2'>Whois</th>
-                </tr>
-                <tr>
-                    <td colspan='2' class='log-output'>" . data->whois . "</td>
-                </tr>
-            </tbody>
-        </table>
+        <form method='POST'>
+            <table class='table wfull'>
+                <tbody>
+                    <tr>
+                        <th>IP</th>
+                        <td>" . data->ip . "</td>
+                    </tr>
+                    <tr>
+                        <th>Note</th>
+                        <td>
+                            <textarea name='note' rows='6'>" . (isset(_POST["note"]) ? _POST["note"] : data->note) . "</textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Created at</th>
+                        <td>" . (data->created_at ? Date("d/m/Y", strtotime(data->created_at)) : "Unknown") . "</td>
+                    </tr>
+                    <tr>
+                        <th>Country</th>
+                        <td>" . data->country . "</td>
+                    </tr>
+                    <tr>
+                        <th>Service</th>
+                        <td>" . data->service . "</td>
+                    </tr>
+                    <tr>
+                        <th colspan='2'>Whois</th>
+                    </tr>
+                    <tr>
+                        <td colspan='2' class='log-output'>" . data->whois . "</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan='2'>
+                            <button type='submit' name='save' value='save' class='float-right'>save</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>
         <div class='page-toolbar'>
             <a href='" . this->urlAddKey("/blacklist") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
             <a href='" . this->urlAddKey("/blacklist/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>

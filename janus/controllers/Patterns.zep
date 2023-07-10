@@ -49,18 +49,20 @@ class Patterns extends Controller
             } else {
                 let status = this->db->execute(
                     "INSERT OR REPLACE INTO block_patterns
-                        (id, 'pattern', 'label', 'category') 
+                        (id, 'pattern', 'label', 'category', 'note') 
                     VALUES 
                         (
                             (SELECT id FROM block_patterns WHERE pattern=:pattern),
                             :pattern,
                             :label,
-                            :category
+                            :category,
+                            :note
                         )",
                     [
                         "pattern": _POST["pattern"],
                         "label": _POST["label"],
-                        "category": isset(_POST["category"]) ? _POST["category"] : "None"
+                        "category": isset(_POST["category"]) ? _POST["category"] : "None",
+                        "note": isset(_POST["note"]) ? _POST["note"] : ""
                     ]
                 );
 
@@ -131,6 +133,12 @@ class Patterns extends Controller
                             <input name='category' type='text' value='" . (isset(_POST["category"]) ? _POST["category"] : "") . "'>
                         </td>
                     </tr>
+                    <tr>
+                        <th>Note</th>
+                        <td>
+                            <textarea name='note' rows='6'>" . (isset(_POST["note"]) ? _POST["note"] : "") . "</textarea>
+                        </td>
+                    </tr>
                 </tbody>
                 <tfoot>
                     <tr>
@@ -193,14 +201,18 @@ class Patterns extends Controller
                     "UPDATE 
                         block_patterns
                     SET 
-                        pattern=:pattern, label=:label, category=:category
+                        pattern=:pattern,
+                        label=:label,
+                        category=:category,
+                        note=:note
                     WHERE
                         id=:id",
                     [
                         "id": data->id,
                         "pattern": _POST["pattern"],
                         "label": _POST["label"],
-                        "category": isset(_POST["category"]) ? _POST["category"] : "None"
+                        "category": isset(_POST["category"]) ? _POST["category"] : "None",
+                        "note": isset(_POST["note"]) ? _POST["note"] : ""
                     ]
                 );
 
@@ -237,6 +249,12 @@ class Patterns extends Controller
                             <input name='category' type='text' value='" . 
                                 (isset(_POST["category"]) ? _POST["category"] : htmlentities(data->category)) . 
                             "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Note</th>
+                        <td>
+                            <textarea name='note' rows='6'>" . (isset(_POST["note"]) ? _POST["note"] : data->note) . "</textarea>
                         </td>
                     </tr>
                 </tbody>

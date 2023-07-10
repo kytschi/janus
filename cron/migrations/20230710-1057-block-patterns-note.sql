@@ -1,0 +1,1 @@
+ALTER TABLE block_patterns ADD note TEXT;

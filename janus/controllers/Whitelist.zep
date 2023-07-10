@@ -80,7 +80,17 @@ class Whitelist extends Controller
 
                 let status = this->db->execute(
                     "INSERT OR REPLACE INTO whitelist
-                        (id, 'ip', 'country', 'service', 'whois', 'ipvsix', 'created_at') 
+                        (
+                            id,
+                            'ip',
+                            'country',
+                            'service',
+                            'whois',
+                            'ipvsix',
+                            'created_at',
+                            'label',
+                            'note'
+                        ) 
                     VALUES 
                         (
                             (SELECT id FROM whitelist WHERE ip=:ip),
@@ -89,7 +99,9 @@ class Whitelist extends Controller
                             :service,
                             :whois,
                             :ipvsix,
-                            :created_at
+                            :created_at,
+                            :label,
+                            :note
                         )",
                     [
                         "ip": _POST["ip"],
@@ -97,7 +109,9 @@ class Whitelist extends Controller
                         "service": service,
                         "whois": whois,
                         "ipvsix": (ipvsix) ? 1 : 0,
-                        "created_at": date("Y-m-d")
+                        "created_at": date("Y-m-d"),
+                        "label": isset(_POST["label"]) ? _POST["label"] : "",
+                        "note": isset(_POST["note"]) ? _POST["note"] : ""
                     ]
                 );
 
@@ -118,6 +132,18 @@ class Whitelist extends Controller
                         <th>IP<span class='required'>*</span></th>
                         <td>
                             <input name='ip' type='text' value='" . (ip ? ip : "") . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Label</th>
+                        <td>
+                            <input name='label' type='text' value='" . (isset(_POST["label"]) ? _POST["label"] : "") . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Note</th>
+                        <td>
+                            <textarea name='note' rows='6'>" . (isset(_POST["note"]) ? _POST["note"] : "") . "</textarea>
                         </td>
                     </tr>
                 </tbody>
@@ -207,7 +233,7 @@ class Whitelist extends Controller
 
     public function edit(string path)
     {
-        var html, data;
+        var html, data, status;
         let html = this->pageTitle("Whitelist IP");
 
         let data = this->db->get(
@@ -221,33 +247,74 @@ class Whitelist extends Controller
             throw new Exception("Entry not found");
         }
 
+        if (isset(_POST["save"])) {
+            let status = this->db->execute(
+                "UPDATE whitelist SET
+                    label=:label,
+                    note=:note
+                WHERE
+                    id=:id",
+                [
+                    "id": data->id,
+                    "label": isset(_POST["label"]) ? _POST["label"] : "",
+                    "note": isset(_POST["note"]) ? _POST["note"] : ""
+                ]
+            );
+
+            if (!is_bool(status)) {
+                throw new Exception(status);
+            }
+            let html .= this->info("Entry updated");
+        }
+
         let html .= "
-        <table class='table wfull'>
-            <tbody>
-                <tr>
-                    <th>IP</th>
-                    <td>" . data->ip . "</td>
-                </tr>
-                <tr>
-                    <th>Created at</th>
-                    <td>" . (data->created_at ? Date("d/m/Y", strtotime(data->created_at)) : "Unknown") . "</td>
-                </tr>
-                <tr>
-                    <th>Country</th>
-                    <td>" . data->country . "</td>
-                </tr>
-                <tr>
-                    <th>Service</th>
-                    <td>" . data->service . "</td>
-                </tr>
-                <tr>
-                    <th colspan='2'>Whois</th>
-                </tr>
-                <tr>
-                    <td colspan='2' class='log-output'>" . data->whois . "</td>
-                </tr>
-            </tbody>
-        </table>
+        <form method='POST'>
+            <table class='table wfull'>
+                <tbody>
+                    <tr>
+                        <th>IP</th>
+                        <td>" . data->ip . "</td>
+                    </tr>
+                    <tr>
+                        <th>Label</th>
+                        <td>
+                            <input name='label' type='text' value='" . (isset(_POST["label"]) ? _POST["label"] : data->label) . "'>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Note</th>
+                        <td>
+                            <textarea name='note' rows='6'>" . (isset(_POST["note"]) ? _POST["note"] : data->note) . "</textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Created at</th>
+                        <td>" . (data->created_at ? Date("d/m/Y", strtotime(data->created_at)) : "Unknown") . "</td>
+                    </tr>
+                    <tr>
+                        <th>Country</th>
+                        <td>" . data->country . "</td>
+                    </tr>
+                    <tr>
+                        <th>Service</th>
+                        <td>" . data->service . "</td>
+                    </tr>
+                    <tr>
+                        <th colspan='2'>Whois</th>
+                    </tr>
+                    <tr>
+                        <td colspan='2' class='log-output'>" . data->whois . "</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan='2'>
+                            <button type='submit' name='save' value='save' class='float-right'>save</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>
         <div class='page-toolbar'>
             <a href='" . this->urlAddKey("/whitelist") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
             <a href='" . this->urlAddKey("/whitelist/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
@@ -364,10 +431,14 @@ class Whitelist extends Controller
             var item;
             for item in data {
                 let html .= "<tr>
-                    <td>" . item->ip .
-                        "<p style='margin:0 !important'><span class='pill'>" . (item->ipvsix ? "IPv6" : "IPv4") . "</span>
-                        " . (item->blacklisted ? "<span class='pill pill-red'>blacklisted</span>" : "") . "</p>
-                    </td>
+                    <td>
+                        <p style='margin-bottom:0 !important'>" . item->ip . "</p>".
+                        (!empty(item->label) ? "<p style='margin-top:0 !important'><strong>" . item->label . "</strong></p>" : "") .
+                        "<p style='margin:0 !important;float:left;width:100%;'>
+                            <span class='pill'>" . (item->ipvsix ? "IPv6" : "IPv4") . "</span>
+                        " . (item->blacklisted ? "<span class='pill pill-red'>blacklisted</span>" : "") .
+                        "</p>" .
+                    "</td>
                     <td>" . (item->country != "UNKNOWN" ? "<p>" . item->country . "</p>" : "") .
                         "<p>" . item->service . "</p></td>
                     <td class='buttons'>

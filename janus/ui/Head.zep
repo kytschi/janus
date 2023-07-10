@@ -352,6 +352,7 @@ class Head extends Controller
             font-weight: bold;
         }
         .table th, .table td {
+            vertical-align: top;
             text-align: left;
             border-right: 3px solid var(--box-title-border-colour);
         }
