@@ -290,12 +290,6 @@ class Watchlist extends Controller
                         <th>Service</th>
                         <td>" . data->service . "</td>
                     </tr>
-                    <tr>
-                        <th colspan='2'>Whois</th>
-                    </tr>
-                    <tr>
-                        <td colspan='2' class='log-output'>" . data->whois . "</td>
-                    </tr>
                 </tbody>
                 <tfoot>
                     <tr>
@@ -319,6 +313,16 @@ class Watchlist extends Controller
         let html .= "
             </div>
         </div>
+        <table class='table wfull'>
+            <tbody>
+                <tr>
+                    <th colspan='2'>Whois</th>
+                </tr>
+                <tr>
+                    <td colspan='2' class='log-output'>" . data->whois . "</td>
+                </tr>
+            </tbody>
+        </table>
         <h2><span>Matching patterns</span></h2>";
         let patterns = this->db->all(
             "SELECT

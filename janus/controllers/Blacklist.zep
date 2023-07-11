@@ -236,12 +236,6 @@ class Blacklist extends Controller
                         <th>Service</th>
                         <td>" . data->service . "</td>
                     </tr>
-                    <tr>
-                        <th colspan='2'>Whois</th>
-                    </tr>
-                    <tr>
-                        <td colspan='2' class='log-output'>" . data->whois . "</td>
-                    </tr>
                 </tbody>
                 <tfoot>
                     <tr>
@@ -257,6 +251,16 @@ class Blacklist extends Controller
             <a href='" . this->urlAddKey("/blacklist/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
             <a href='" . this->urlAddKey("/blacklist/white/". data->id) . "' class='round icon icon-whitelist align-right' title='Whitelist the entry'>&nbsp;</a>
         </div>
+        <table class='table wfull'>
+            <tbody>
+                <tr>
+                    <th colspan='2'>Whois</th>
+                </tr>
+                <tr>
+                    <td colspan='2' class='log-output'>" . data->whois . "</td>
+                </tr>
+            </tbody>
+        </table>
         <h2><span>Matching patterns</span></h2>";
 
         let data = this->db->all(
