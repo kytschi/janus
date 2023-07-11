@@ -268,7 +268,7 @@ class Logs extends Controller
                     class='tag' 
                     title='Whitelisted in Janus' 
                     href='" . this->urlAddKey("/whitelist/edit/" . found->id) . "'>
-                    <strong>Found whitelisted IP: " . found->ip . "</strong>
+                    <strong>Found whitelisted IP: " . (found->label ? found->label : found->ip) . "</strong>
                 </a>";
         } else {
             let html .= "<a 
