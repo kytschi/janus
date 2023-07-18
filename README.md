@@ -99,6 +99,45 @@ This will create a bash script called `migrations.sh` simply run this from your 
 ## Logs
 I've managed to test this with nginx, apache, ssh and mail logs. So far it's managed to find the pattern and IPs from them. If your find it's not working for your logs either open an issue with a sample of your log (DONT SHARE SENSITIVE INFO) or drop me a message at dev@kytschi.com and I'll see if I can sort it.
 
+## Notes on iptables
+If you have other entries in your iptables that could override what Janus is doing it would be worth you moving the `JANUS_BLACKLIST` and `JANUS_WHITELIST` entries above those that conflict.
+
+A little howto but feel free to look up a better method.
+
+Display iptables lines number:
+
+```
+iptables -L -n INPUT --line-numbers
+
+Chain INPUT (policy ACCEPT)
+num  target             prot opt source               destination         
+1    ACCEPT             all  --  192.168.1.2          0.0.0.0/0            
+2    ACCEPT             all  --  192.168.1.3          0.0.0.0/0        
+3    ACCEPT             all  --  192.168.1.4          0.0.0.0/0
+4    JANUS_BLACKLIST    all  --  0.0.0.0/0            0.0.0.0/0
+```
+
+Let's say that you want to move the rule num 4 to the rule num 1 do this:
+
+```
+iptables -I INPUT 1 -j JANUS_BLACKLIST
+```
+-I: to insert
+
+INPUT: Name of the chain
+
+1: Position number where you want to insert the chain
+
+-j: rule to insert at the position number
+
+As we insert a new rule, the old rule that was in the fourth position is now in the fifth position.
+
+Delete your old rule num 4 which is now in position num 5:
+
+```
+iptables -D INPUT 5
+```
+
 ## Credits
 Janus background - Deep Ellum Janus, by Dan Colcer (Transylvania, Romania @dcolcerart) was painted in 2016.
 
