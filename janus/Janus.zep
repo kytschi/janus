@@ -73,8 +73,8 @@ class Janus extends Controller
         
         if (session_status() === 1) {
             session_name("janus");
-            ini_set("session.gc_maxlifetime", 900);
-            ini_set("session.cookie_lifetime", 900);
+            ini_set("session.gc_maxlifetime", 3600);
+            ini_set("session.cookie_lifetime", 3600);
             session_start();
         }
 
