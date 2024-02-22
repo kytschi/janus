@@ -10,8 +10,10 @@ Make sure to carefully build your whitelist so not to block valid services or se
 
 ## Requirements
 * PHP 7.4 or 8+
-* PHP-SQLite
+* PHP-PDO
 * PHP-GD
+* PHP-SQLite (optional depending on your preferred db choice)
+* PHP-Mysql (optional depending on your preferred db choice)
 * iptables, IPv6 has been added but the pattern parsing is a pain and it might result in invalid matches.
 * any log with URLs and IPs.
 * geoiplookup (OPTIONAL, only if you want to lookup the country of origin)
@@ -43,6 +45,11 @@ If you have problems with the pre-compiled try building it yourself either via r
 In the Janus folder copy `janus.db.example` to `janus.db`. You can place this SQLite databse anywhere you like, it doesn't have to be in the Janus folder.
 
 Make sure the `janus.db` file has write permissions by the webserver user.
+
+If you'd prefer to have MySQL/MariaDB support then create a database called `janus` for example and run the 
+`mysql.sql` sql file located in the Janus folder against the database.
+
+Remember to create a username for the database with a nice password and give it read/write access.
 
 ### Step 4: generate a janus key
 Run a command like this,

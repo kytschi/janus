@@ -41,18 +41,67 @@ class Janus extends Controller
 {
     public function __construct(string db, string url_key = "", bool cron = false, bool migrations = false)
     {
-        if (!file_exists(db)) {
-            throw new Exception("SQLite DB not found", (cron || migrations) ? true : false);
+        var splits, username = "", password = "";
+
+        let splits = explode(":", db);
+
+        if (!isset(splits[1])) {
+            throw new Exception("Invalid database string", (cron || migrations) ? true : false);
+        }
+
+        switch (splits[0]) {
+            case "mysql":
+                let splits = this->setCredentials(splits[1]);
+                let username = splits[0];
+                let password = splits[1];
+                break;
+            case "sqlite":
+                if (!file_exists(str_replace("sqlite:", "", db))) {
+                    throw new Exception("SQLite DB not found", (cron || migrations) ? true : false);
+                }
+                break;
+            default:
+                throw new Exception("Invalid database connection", (cron || migrations) ? true : false);
+                break;
         }
 
         if (!file_exists(url_key)) {
             throw new Exception("Invalid key", (cron || migrations) ? true : false);
         }
 
-        let this->db = new Database(db);
+        let this->db = new Database(db, username, password);
 
         var settings;
         let settings = this->db->get("SELECT * FROM settings LIMIT 1");
+        if (empty(settings)) {
+            this->db->execute("INSERT INTO settings
+            (
+                ip_lookup,
+                service_lookup,
+                firewall_command,
+                firewall_cfg_folder,
+                firewall_cfg_file_v4,
+                cron_folder,
+                cron_running,
+                webuser,
+                firewall_cfg_file_v6,
+                firewall_command_v6
+            )
+            VALUES
+            (
+                1,
+                1,
+                '/usr/sbin/iptables',
+                '/etc/iptables/',
+                'rules.v4',
+                '/var/www/janus/cron',
+                0,
+                'www-data',
+                'rules.v6',
+                '/usr/sbin/ip6tables'
+            )");
+            let settings = this->db->get("SELECT * FROM settings LIMIT 1");
+        }
         let settings->db_file = db;
         let settings->url_key_file = url_key;
         let settings->url_key = trim(file_get_contents(url_key), "\n");
@@ -935,6 +984,21 @@ class Janus extends Controller
                 </div>
             </div>
         </div>";
+    }
+
+    private function setCredentials(string str)
+    {
+        var splits, key, username = "", password = "";
+        let splits = explode(";", str);
+        for key in splits {
+            if (strpos(key, "UID=") !== false) {
+                let username = str_replace(["UID=", "'", "\""], "", key);
+            } elseif (strpos(key, "PWD=") !== false) {
+                let password = str_replace(["PWD=", "'", "\""], "", key);
+            }
+        }
+
+        return [username, password];
     }
 
     private function settings(string path)

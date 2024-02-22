@@ -30,9 +30,9 @@ class Database
 {
     private db;
 
-    public function __construct(string db_file)
+    public function __construct(string dsn, string username, string password)
     {
-        let this->db = new \PDO("sqlite:" . db_file);
+        let this->db = new \PDO(dsn, username, password);
     }
 
     public function all(string query, array data = [])

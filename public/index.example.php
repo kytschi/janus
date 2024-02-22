@@ -1,8 +1,9 @@
 <?php
+
 /**
  * Janus example index
  *
- * @author 		Mike Welsh
+ * @author      Mike Welsh
  * @copyright   2023 Mike Welsh
  * @version     0.0.1
  *
@@ -22,10 +23,16 @@
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301, USA.
  */
+
 use Janus\Janus;
 use Janus\Exceptions\Exception;
 
-$db = '/var/www/janus/janus.db';
+//SQLite
+$db = 'sqlite:/var/www/janus/janus.db';
+
+//Mysql
+//$db = 'mysql:dbname=janus;host=127.0.0.1;UID=janus;PWD=janus;';
+
 $key = '/var/www/janus/janus.key';
 
 try {
