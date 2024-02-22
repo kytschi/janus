@@ -67,8 +67,13 @@ Inside the `public` folder there is an example file called `index.example.php` y
 Open the `index.php` and replace the lines with location of where your files are.
 
 ```php
-$db = '/var/www/janus/janus.db';
+$db = 'sqlite:/var/www/janus/janus.db';
 $key = '/var/www/janus/janus.key';
+```
+
+If you'd like to use MySQL/MariaDB over SQLite then use the following.
+```php
+$db = 'mysql:dbname=janus;host=127.0.0.1;UID=janus;PWD=janus;';
 ```
 
 ### Step 6: login and configure the settings
