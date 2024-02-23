@@ -316,7 +316,7 @@ class Blacklist extends Controller
 
     public function export(string path)
     {
-        var item, data, iLoop = 0, query, vars = [];
+        var item, data, iLoop = 0, query, vars = [], head, colon = false;
 
         let query = "SELECT * FROM blacklist";
         if (isset(_GET["i"])) {
@@ -332,7 +332,8 @@ class Blacklist extends Controller
         
         header("Content-Type: application/sql");
         header("Content-Disposition: attachment; filename=janus_" . date("Y_m_d_H_i_s") . ".jim");
-        echo "REPLACE INTO blacklist (`id`, `ip`, `country`, `whois`, `service`, `created_at`, `ipvsix`, `note`) VALUES";
+        let head = "REPLACE INTO blacklist (`id`, `ip`, `country`, `whois`, `service`, `created_at`, `ipvsix`, `note`) VALUES";
+        echo head;
         for iLoop, item in data {
             echo "\n(
                 (SELECT id FROM blacklist AS src WHERE ip=\"" . item->ip . "\" LIMIT 1), 
@@ -344,11 +345,18 @@ class Blacklist extends Controller
                 \"" . addslashes(item->ipvsix) . "\",
                 \"" . addslashes(item->note) . "\"
             )";
-            if (iLoop < count(data) - 1) {
+            if (!fmod(iLoop + 1, 20)) {
+                let colon = true;
+                echo ";";
+                echo head;
+            } elseif (iLoop < count(data) - 1) {
+                let colon = false;
                 echo ",";
             }
         }
-        echo ";";
+        if (!colon) {
+            echo ";";
+        }
         die();
     }
 

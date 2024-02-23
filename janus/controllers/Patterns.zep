@@ -277,7 +277,7 @@ class Patterns extends Controller
 
     public function export(string path)
     {
-        var item, data, iLoop = 0, query, vars = [];
+        var item, data, iLoop = 0, query, vars = [], head, colon = false;
 
         let query = "SELECT * FROM block_patterns";
         if (isset(_GET["p"])) {
@@ -296,7 +296,8 @@ class Patterns extends Controller
         
         header("Content-Type: application/sql");
         header("Content-Disposition: attachment; filename=janus_" . date("Y_m_d_H_i_s") . ".jim");
-        echo "REPLACE INTO block_patterns (`id`, `pattern`, `label`, `category`) VALUES";
+        let head = "REPLACE INTO block_patterns (`id`, `pattern`, `label`, `category`) VALUES";
+        echo head;
         for iLoop, item in data {
             echo "\n(
                 (SELECT id FROM block_patterns AS src WHERE pattern=\"" . item->pattern . "\" LIMIT 1), 
@@ -304,11 +305,18 @@ class Patterns extends Controller
                 \"" . addslashes(item->label) . "\", 
                 \"" . addslashes(item->category) . "\"
             )";
-            if (iLoop < count(data) - 1) {
+            if (!fmod(iLoop + 1, 20)) {
+                let colon = true;
+                echo ";";
+                echo head;
+            } elseif (iLoop < count(data) - 1) {
+                let colon = false;
                 echo ",";
             }
         }
-        echo ";";
+        if (!colon) {
+            echo ";";
+        }
         die();
     }
 
