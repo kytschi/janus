@@ -33,6 +33,8 @@ class Controller
     public routes = [];
     public settings;
 
+    public per_page = 100;
+
     public function cleanUrl(string path, string clean)
     {
         return str_replace(
@@ -138,6 +140,52 @@ class Controller
         ];
     }
 
+    public function import(string path)
+    {
+        var data, status, html = "";
+
+        let html = this->pageTitle("Importing");
+        if (isset(_POST["save"])) {
+            if (!this->validate(_FILES, ["file"])) {
+                let html .= this->error();
+            } else {
+                let data = file_get_contents(_FILES["file"]["tmp_name"]);
+                let status = this->db->execute(data);
+
+                if (!is_bool(status)) {
+                    throw new Exception(status);
+                }
+                let html .= this->info("Import successful");
+            }
+        }
+        
+        let html .= "
+        <form method='POST' enctype='multipart/form-data'>
+            <table class='table wfull'>
+                <tbody>
+                    <tr>
+                        <th>File<span class='required'>*</span></th>
+                        <td>
+                            <input name='file' type='file' accept='.jim'>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan='2'>
+                            <button type='submit' name='save' value='save' class='float-right'>import</button>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>
+        <div class='page-toolbar'>
+            <a href='" . str_replace("/import", "", path) . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
+        </div>";
+
+        return html;
+    }
+
     public function info(string message)
     {
         return "<div class='info box wfull'>
@@ -155,6 +203,37 @@ class Controller
         let head = new Head(this->settings);
 
         return "<h1><span>" . title . "</span></h1>" . (toolbar ? head->toolbar() : "");
+    }
+
+    public function pagination(int count, int page, string url)
+    {
+        var html, pages = 1, iLoop = 1;
+
+        let pages = intval(count / this->per_page);
+        if (pages < 1) {
+            let pages = 1;
+        }
+
+        if ((pages * this->per_page) < count) {
+            let pages += 1;
+        }
+
+        let html = "
+        <div class='pagination w-100'>
+            <span>" . count  . " result(s)</span><div>";
+
+        while(iLoop <= pages) {
+            let html .= "<a href='" . this->urlAddKey(url) . "?page=" . iLoop . "'";
+            if (iLoop == page) {
+                let html .= " class='selected'";
+            }
+            let html .= ">" . iLoop . "</a>";
+            let iLoop += 1;
+        }
+
+        let html .= "</div></div>";
+
+        return html;
     }
 
     public function redirect(string url)

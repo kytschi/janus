@@ -34,6 +34,8 @@ class Blacklist extends Controller
         "/blacklist/delete/": "delete",
         "/blacklist/edit/": "edit",
         "/blacklist/white/": "whitelist",
+        "/blacklist/export": "export",
+        "/blacklist/import": "import",
         "/blacklist": "index"
     ];
 
@@ -312,9 +314,47 @@ class Blacklist extends Controller
         return html;
     }
 
+    public function export(string path)
+    {
+        var item, data, iLoop = 0, query, vars = [];
+
+        let query = "SELECT * FROM blacklist";
+        if (isset(_GET["i"])) {
+            let query .= " WHERE ip=:query";
+            let vars["query"] = urldecode(_GET["i"]);
+        }
+        let query .= " ORDER BY ip";
+
+        let data = this->db->all(query, vars);
+        if (empty(data)) {
+            throw new Exception("No blacklist to export");
+        }
+        
+        header("Content-Type: application/sql");
+        header("Content-Disposition: attachment; filename=janus_" . date("Y_m_d_H_i_s") . ".jim");
+        echo "REPLACE INTO blacklist (`id`, `ip`, `country`, `whois`, `service`, `created_at`, `ipvsix`, `note`) VALUES";
+        for iLoop, item in data {
+            echo "\n(
+                (SELECT id FROM blacklist AS src WHERE ip=\"" . item->ip . "\" LIMIT 1), 
+                \"" . addslashes(item->ip) . "\", 
+                \"" . addslashes(item->country) . "\", 
+                \"" . addslashes(item->whois) . "\",
+                \"" . addslashes(item->service) . "\", 
+                \"" . addslashes(item->created_at) . "\", 
+                \"" . addslashes(item->ipvsix) . "\",
+                \"" . addslashes(item->note) . "\"
+            )";
+            if (iLoop < count(data) - 1) {
+                echo ",";
+            }
+        }
+        echo ";";
+        die();
+    }
+
     public function index(string path)
     {
-        var html, data, query, vars=[];
+        var html, data, query, vars=[], page = 1, count, where = "", filter = "";
         let html = this->pageTitle("Blacklisted IPs");
 
         if (isset(_GET["deleted"])) {
@@ -322,7 +362,15 @@ class Blacklist extends Controller
         } elseif (isset(_GET["whitelist"])) {
             let html .= this->info("Entry has been marked for whitelisting");
         }
+
+        if (isset(_GET["page"])) {
+            let page = intval(_GET["page"]);
+            if (empty(page)) {
+                let page = 1;
+            }
+        }
         
+        let count = "SELECT count(id) AS total FROM blacklist";
         let query = "
             SELECT 
                 blacklist.*,
@@ -337,13 +385,18 @@ class Blacklist extends Controller
                 (SELECT id FROM whitelist WHERE whitelist.ip=blacklist.ip) AS whitelisted  
                 FROM blacklist";
         if (isset(_POST["q"])) {
-            let query .= " WHERE blacklist.ip LIKE :query";
-            let vars["query"] = "%" . _POST["q"] . "%";
+            let where .= " WHERE blacklist.ip=:query";
+            let vars["query"] = _POST["q"];
+            let filter = "?i=" . urlencode(_POST["q"]);
         }
-        let query .= " ORDER BY patterns DESC, blacklist.ip ASC";
+
+        let count = this->db->get(count . where, vars);
+        let count = count->total;
+
+        let query .= where . " ORDER BY patterns DESC, blacklist.ip ASC LIMIT " . page . ", " . this->per_page;
 
         let data = this->db->all(query, vars);
-        if (count(data)) {
+        if (count) {
             let html .= "
                 <form action='" . this->urlAddKey("/blacklist") . "' method='post'>
                     <table class='table wfull'>
@@ -396,13 +449,21 @@ class Blacklist extends Controller
                 </tr>";
             }
             let html .= "</tbody></table>";
+            let html .= this->pagination(count, page, "/blacklist/add");
         } else {
             let html .= "<h2><span>Nothing found</span></h2>";
             if (isset(_POST["q"])) {
                 let html .= "<p><a href='" . this->urlAddKey("/blacklist") . "' class='button'>clear search</a></p>";
             }
-            let html .= "<p><a href='" . this->urlAddKey("/blacklist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
+
+        let html .= "<div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/blacklist/add") . "' class='round icon icon-add'>&nbsp;</a>";
+        if (count) {
+            let html .= "<a href='" . this->urlAddKey("/blacklist/export" . filter) . "' class='round icon icon-export' title='Export Janus blacklist'>&nbsp;</a>";
+        }
+        let html .= "<a href='" . this->urlAddKey("/blacklist/import") . "' class='round icon icon-import' title='Import Janus blacklist'>&nbsp;</a>
+        </div>";
         return html;
     }
 

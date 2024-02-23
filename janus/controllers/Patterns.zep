@@ -299,7 +299,7 @@ class Patterns extends Controller
         echo "REPLACE INTO block_patterns (`id`, `pattern`, `label`, `category`) VALUES";
         for iLoop, item in data {
             echo "\n(
-                (SELECT id FROM block_patterns AS src WHERE pattern=\"" . item->pattern . "\"), 
+                (SELECT id FROM block_patterns AS src WHERE pattern=\"" . item->pattern . "\" LIMIT 1), 
                 \"" . addslashes(item->pattern) . "\", 
                 \"" . addslashes(item->label) . "\", 
                 \"" . addslashes(item->category) . "\"
@@ -312,80 +312,45 @@ class Patterns extends Controller
         die();
     }
 
-    public function import(string path)
-    {
-        var data, status, html = "";
-
-        let html = this->pageTitle("Importing patterns");
-        if (isset(_POST["save"])) {
-            if (!this->validate(_FILES, ["file"])) {
-                let html .= this->error();
-            } else {
-                let data = file_get_contents(_FILES["file"]["tmp_name"]);
-                let status = this->db->execute(data);
-
-                if (!is_bool(status)) {
-                    throw new Exception(status);
-                }
-                let html .= this->info("Import successful");
-            }
-        }
-        
-        let html .= "
-        <form method='POST' enctype='multipart/form-data'>
-            <table class='table wfull'>
-                <tbody>
-                    <tr>
-                        <th>File<span class='required'>*</span></th>
-                        <td>
-                            <input name='file' type='file' accept='.jim'>
-                        </td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan='2'>
-                            <button type='submit' name='save' value='save' class='float-right'>import</button>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </form>
-        <div class='page-toolbar'>
-            <a href='" . this->urlAddKey("/patterns") . "' class='round icon icon-back' title='Back to list'>&nbsp;</a>
-        </div>";
-
-        return html;
-    }
-
     public function index(string path)
     {
-        var html, data, query, vars=[], categories, categories_query, item, filter = "";
+        var html, data, query, vars=[], categories, categories_query, 
+            item, filter = "", page = 1, count, where = "";
         let html = this->pageTitle("Block patterns");
 
         if (isset(_GET["deleted"])) {
             let html .= this->info("Entry deleted");
         }
 
+        if (isset(_GET["page"])) {
+            let page = intval(_GET["page"]);
+            if (empty(page)) {
+                let page = 1;
+            }
+        }
+
+        let count = "SELECT count(id) AS total FROM block_patterns";
         let query = "SELECT * FROM block_patterns";
         let categories_query = "SELECT category FROM block_patterns";
         if (isset(_POST["q"])) {
-            let query .= " WHERE pattern LIKE :query";
-            let categories_query .= " WHERE pattern LIKE :query";
+            let where .= " WHERE pattern LIKE :query";
             let vars["query"] = "%" . _POST["q"] . "%";
             let filter = "?p=" . urlencode(_POST["q"]);
         } elseif (isset(_GET["c"])) {
-            let query .= " WHERE category = :query";
-            let categories_query .= " WHERE category = :query";
+            let where .= " WHERE category = :query";
             let vars["query"] = urldecode(_GET["c"]);
             let filter = "?c=" . _GET["c"];
         }
-        let categories_query .= " GROUP BY category ORDER BY category";
-        let query .= " ORDER BY pattern";
+        let categories_query .= where . " GROUP BY category ORDER BY category";
+
+        let count = this->db->get(count . where, vars);
+        let count = count->total;
+
+        let query .= where . " ORDER BY pattern LIMIT " . page . ", " . this->per_page;
         
         let categories = this->db->all(categories_query, vars);
         let data = this->db->all(query, vars);
-        if (count(data)) {
+        if (count) {
             let html .= "
                 <form action='" . this->urlAddKey("/patterns") . "' method='post'>
                     <table class='table wfull'>
@@ -442,18 +407,24 @@ class Patterns extends Controller
                     </td>
                 </tr>";
             }
-            let html .= "</tbody></table>
-            <div class='page-toolbar'>
-                <a href='" . this->urlAddKey("/patterns/export" . filter) . "' class='round icon icon-export' title='Export Janus patterns'>&nbsp;</a>
-                <a href='" . this->urlAddKey("/patterns/import") . "' class='round icon icon-import' title='Import Janus patterns'>&nbsp;</a>
-            </div>";
+            let html .= "</tbody></table>";
+
+            let html .= this->pagination(count, page, "/patterns");
         } else {
             let html .= "<h2><span>No patterns found</span></h2>";
             if (isset(_POST["q"])) {
                 let html .= "<p><a href='" . this->urlAddKey("/patterns") . "' class='button'>clear search</a></p>";
             }
-            let html .= "<p><a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
+
+        let html .= "<div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/patterns/add") . "' class='round icon icon-add'>&nbsp;</a>";
+        if (count) {
+            let html .= "<a href='" . this->urlAddKey("/patterns/export" . filter) . "' class='round icon icon-export' title='Export Janus patterns'>&nbsp;</a>";
+        }
+        let html .= "<a href='" . this->urlAddKey("/patterns/import") . "' class='round icon icon-import' title='Import Janus patterns'>&nbsp;</a>
+        </div>";
+
         return html;
     }
 }

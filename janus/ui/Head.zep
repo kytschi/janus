@@ -305,13 +305,30 @@ class Head extends Controller
         }
 
         /* Box */
-        .box, .table {
+        .box, .table, .pagination {
             border: 3px solid var(--box-border-colour);
             box-shadow: var(--box-shadow);
             background-color: var(--box-background-colour);
             margin-bottom: 40px;
             border-collapse: collapse;
             min-width: 50%;
+        }
+        .pagination {
+            padding: 20px;
+        }
+        .pagination span {
+            float: left;
+        }
+        .pagination div {
+            text-align: right;
+            float: right;
+        }
+        .pagination a {
+            margin-left: 10px;
+        }
+        .pagination a.selected {
+            font-weight: bold;
+            text-decoration: underline;
         }
         #login.box {
             width: 50%;
