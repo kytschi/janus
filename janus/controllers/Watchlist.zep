@@ -578,7 +578,7 @@ class Watchlist extends Controller
                 </tr>";
             }
             let html .= "</tbody></table>";
-            let html .= this->pagination(count, page, "/watchlist/add");
+            let html .= this->pagination(count, page, "/watchlist");
         } else {
             let html .= "<h2><span>Nothing found</span></h2>";
             if (isset(_POST["q"])) {

@@ -208,29 +208,42 @@ class Controller
 
     public function pagination(int count, int page, string url)
     {
-        var html, pages = 1, iLoop = 1;
+        var html, pages = 1, start = 1, end = 10;
 
         let pages = intval(count / this->per_page);
         if (pages < 1) {
             let pages = 1;
         }
-
         if ((pages * this->per_page) < count) {
             let pages += 1;
+        }
+        if (page >= end) {
+            let start = intval(page / 10) * 10;
+        }
+
+        let end = start + 9;
+        if (end > pages) {
+            let end = pages;
         }
 
         let html = "
         <div class='pagination w-100'>
             <span>" . count  . " result(s)</span><div>";
 
-        while(iLoop <= pages) {
-            let html .= "<a href='" . this->urlAddKey(url) . "?page=" . iLoop . "'";
-            if (iLoop == page) {
+        let html .= "<a href='" . this->urlAddKey(url) . "?page=1'>&lt;&lt;</a>";
+        let html .= "<a href='" . this->urlAddKey(url) . "?page=" . (page == 1 ? 1 : page - 1). "'>&lt;</a>";
+
+        while(start <= end) {
+            let html .= "<a href='" . this->urlAddKey(url) . "?page=" . start . "'";
+            if (start == page) {
                 let html .= " class='selected'";
             }
-            let html .= ">" . iLoop . "</a>";
-            let iLoop += 1;
+            let html .= ">" . start . "</a>";
+            let start += 1;
         }
+
+        let html .= "<a href='" . this->urlAddKey(url) . "?page=" . (page == pages ? pages : page + 1). "'>&gt;</a>";
+        let html .= "<a href='" . this->urlAddKey(url) . "?page=" . pages . "'>&gt;&gt;</a>";
 
         let html .= "</div></div>";
 
