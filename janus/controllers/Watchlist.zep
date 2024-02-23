@@ -35,6 +35,8 @@ class Watchlist extends Controller
         "/watchlist/edit/": "edit",
         "/watchlist/white/": "whitelist",
         "/watchlist/black/": "blacklist",
+        "/watchlist/export": "export",
+        "/watchlist/import": "import",
         "/watchlist": "index"
     ];
 
@@ -419,9 +421,54 @@ class Watchlist extends Controller
         return html;
     }
 
+    public function export(string path)
+    {
+        var item, data, iLoop = 0, query, vars = [], head, colon = false;
+
+        let query = "SELECT * FROM watchlist";
+        if (isset(_GET["i"])) {
+            let query .= " WHERE ip=:query";
+            let vars["query"] = urldecode(_GET["i"]);
+        }
+        let query .= " ORDER BY ip";
+
+        let data = this->db->all(query, vars);
+        if (empty(data)) {
+            throw new Exception("No watchlist to export");
+        }
+        
+        header("Content-Type: application/sql");
+        header("Content-Disposition: attachment; filename=janus_" . date("Y_m_d_H_i_s") . ".jim");
+        let head = "REPLACE INTO watchlist (`id`, `ip`, `created_at`, `country`, `service`, `whois`, `note`) VALUES";
+        echo head;
+        for iLoop, item in data {
+            echo "\n(
+                (SELECT id FROM watchlist AS src WHERE ip=\"" . item->ip . "\" LIMIT 1), 
+                \"" . addslashes(item->ip) . "\", 
+                \"" . addslashes(item->created_at) . "\", 
+                \"" . addslashes(item->country) . "\",
+                \"" . addslashes(item->service) . "\",
+                \"" . addslashes(item->whois) . "\",
+                \"" . addslashes(item->note) . "\",
+            )";
+            if (!fmod(iLoop + 1, 20)) {
+                let colon = true;
+                echo ";/*ENDJIM*/";
+                echo head;
+            } elseif (iLoop < count(data) - 1) {
+                let colon = false;
+                echo ",";
+            }
+        }
+        if (!colon) {
+            echo ";/*ENDJIM*/";
+        }
+        die();
+    }
+
     public function index(string path)
     {
-        var html, data, query, vars=[];
+        var html, data, query, vars=[], page = 1, count, where = "", filter = "";
         let html = this->pageTitle("Watchlist");
 
         if (isset(_GET["deleted"])) {
@@ -431,6 +478,15 @@ class Watchlist extends Controller
         } elseif (isset(_GET["blacklist"])) {
             let html .= this->info("Entry has been marked for blacklisting");
         }
+
+        if (isset(_GET["page"])) {
+            let page = intval(_GET["page"]);
+            if (empty(page)) {
+                let page = 1;
+            }
+        }
+        
+        let count = "SELECT count(id) AS total FROM watchlist";
         
         let query = "
             SELECT 
@@ -455,13 +511,18 @@ class Watchlist extends Controller
                 (SELECT id FROM blacklist WHERE blacklist.ip=watchlist.ip) AS blacklisted   
                 FROM watchlist";
         if (isset(_POST["q"])) {
-            let query .= " WHERE watchlist.ip LIKE :query";
-            let vars["query"] = "%" . _POST["q"] . "%";
+            let where .= " WHERE watchlist.ip=:query";
+            let vars["query"] = _POST["q"];
+            let filter = "?i=" . urlencode(_POST["q"]);
         }
-        let query .= " ORDER BY patterns DESC, watchlist.ip ASC";
+
+        let count = this->db->get(count . where, vars);
+        let count = count->total;
+
+        let query .= where . " ORDER BY patterns DESC, watchlist.ip ASC LIMIT " . page . ", " . this->per_page;
 
         let data = this->db->all(query, vars);
-        if (count(data)) {
+        if (count) {
             let html .= "
                 <form action='" . this->urlAddKey("/watchlist") . "' method='post'>
                     <table class='table wfull'>
@@ -517,13 +578,22 @@ class Watchlist extends Controller
                 </tr>";
             }
             let html .= "</tbody></table>";
+            let html .= this->pagination(count, page, "/watchlist/add");
         } else {
             let html .= "<h2><span>Nothing found</span></h2>";
             if (isset(_POST["q"])) {
                 let html .= "<p><a href='" . this->urlAddKey("/watchlist") . "' class='button'>clear search</a></p>";
             }
-            let html .= "<p><a href='" . this->urlAddKey("/watchlist/add") . "' class='round icon icon-add'>&nbsp;</a></p>";
         }
+
+        let html .= "<div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/watchlist/add") . "' class='round icon icon-add'>&nbsp;</a>";
+        if (count) {
+            let html .= "<a href='" . this->urlAddKey("/watchlist/export" . filter) . "' class='round icon icon-export' title='Export Janus blacklist'>&nbsp;</a>";
+        }
+        let html .= "<a href='" . this->urlAddKey("/watchlist/import") . "' class='round icon icon-import' title='Import Janus blacklist'>&nbsp;</a>
+        </div>";
+
         return html;
     }
 

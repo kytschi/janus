@@ -379,7 +379,7 @@ class Whitelist extends Controller
 
     public function export(string path)
     {
-        var item, data, iLoop = 0, query, vars = [];
+        var item, data, iLoop = 0, query, vars = [], head, colon = false;
 
         let query = "SELECT * FROM whitelist";
         if (isset(_GET["i"])) {
@@ -395,7 +395,8 @@ class Whitelist extends Controller
         
         header("Content-Type: application/sql");
         header("Content-Disposition: attachment; filename=janus_" . date("Y_m_d_H_i_s") . ".jim");
-        echo "REPLACE INTO whitelist (`id`, `ip`, `country`, `whois`, `service`, `created_at`, `ipvsix`, `note`, `label`) VALUES";
+        let head = "REPLACE INTO whitelist (`id`, `ip`, `country`, `whois`, `service`, `created_at`, `ipvsix`, `note`, `label`) VALUES";
+        echo head;
         for iLoop, item in data {
             echo "\n(
                 (SELECT id FROM whitelist AS src WHERE ip=\"" . item->ip . "\" LIMIT 1), 
@@ -408,11 +409,18 @@ class Whitelist extends Controller
                 \"" . addslashes(item->note) . "\",
                 \"" . addslashes(item->label) . "\"
             )";
-            if (iLoop < count(data) - 1) {
+            if (!fmod(iLoop + 1, 20)) {
+                let colon = true;
+                echo ";/*ENDJIM*/";
+                echo head;
+            } elseif (iLoop < count(data) - 1) {
+                let colon = false;
                 echo ",";
             }
         }
-        echo ";";
+        if (!colon) {
+            echo ";/*ENDJIM*/";
+        }
         die();
     }
 
@@ -449,7 +457,7 @@ class Whitelist extends Controller
         let count = this->db->get(count . where, vars);
         let count = count->total;
 
-        let query .= where . " ORDER BY whitelist.ip, whitelist.country";
+        let query .= where . " ORDER BY whitelist.ip, whitelist.country LIMIT " . page . ", " . this->per_page;
 
         let data = this->db->all(query, vars);
             

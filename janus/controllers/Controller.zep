@@ -142,18 +142,19 @@ class Controller
 
     public function import(string path)
     {
-        var data, status, html = "";
+        var data, status, html = "", sql;
 
         let html = this->pageTitle("Importing");
         if (isset(_POST["save"])) {
             if (!this->validate(_FILES, ["file"])) {
                 let html .= this->error();
             } else {
-                let data = file_get_contents(_FILES["file"]["tmp_name"]);
-                let status = this->db->execute(data);
-
-                if (!is_bool(status)) {
-                    throw new Exception(status);
+                let data = explode(";/*ENDJIM*/", file_get_contents(_FILES["file"]["tmp_name"]));
+                for sql in data {
+                    let status = this->db->execute(sql);
+                    if (!is_bool(status)) {
+                        throw new Exception(status);
+                    }
                 }
                 let html .= this->info("Import successful");
             }

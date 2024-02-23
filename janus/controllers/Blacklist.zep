@@ -347,7 +347,7 @@ class Blacklist extends Controller
             )";
             if (!fmod(iLoop + 1, 20)) {
                 let colon = true;
-                echo ";";
+                echo ";/*ENDJIM*/";
                 echo head;
             } elseif (iLoop < count(data) - 1) {
                 let colon = false;
@@ -355,7 +355,7 @@ class Blacklist extends Controller
             }
         }
         if (!colon) {
-            echo ";";
+            echo ";/*ENDJIM*/";
         }
         die();
     }
