@@ -89,7 +89,7 @@ Then using the URL you setup for `janus` add the `janus.key` as the path to visi
 
 The key I generated contains `01234567899876543210` so I've access the URL as follows:-
 
-**https://janus.kytschi.com/**`01234567899876543210`
+https://janus.kytschi.com/`01234567899876543210`
 
 The default login is username: `janus` and password: `letmein` **CHANGE THIS!** Go to `settings` and from there `users` then update the username and password to whatever you like. **Don't use something like `admin` or `root` be creative!**
 
