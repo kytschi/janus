@@ -80,10 +80,14 @@ class Blacklist extends Controller
                     let ipvsix = true;
                 }
 
+                let data = this->db->get("SELECT id FROM blacklist WHERE ip=:ip", ["ip": ip]);
+                if (empty(data)) {
+                    return;
+                }
+
                 let status = this->db->execute(
-                    "INSERT OR REPLACE INTO blacklist
+                    "INSERT INTO blacklist
                         (
-                            id,
                             'ip',
                             'country',
                             'service',
@@ -94,7 +98,6 @@ class Blacklist extends Controller
                         ) 
                     VALUES 
                         (
-                            (SELECT id FROM blacklist WHERE ip=:ip),
                             :ip,
                             :country,
                             :service,
@@ -494,12 +497,16 @@ class Blacklist extends Controller
             throw new Exception(status);
         } 
         
+        let status = this->db->get("SELECT id FROM whitelist WHERE ip=:ip", ["ip": data->ip]);
+        if (!empty(status)) {
+            return;
+        }
+
         let status = this->db->execute(
-            "INSERT OR REPLACE INTO whitelist
-                (id, 'ip', 'country', 'whois', 'service', 'created_at') 
+            "INSERT INTO whitelist
+                ('ip', 'country', 'whois', 'service', 'created_at') 
             VALUES 
                 (
-                    (SELECT id FROM whitelist WHERE ip=:ip),
                     :ip,
                     :country,
                     :whois,

@@ -758,12 +758,16 @@ class Janus extends Controller
             }
         }
 
+        let data = this->db->get("SELECT id FROM blacklist WHERE ip=:ip", ["ip": ip]);
+        if (!empty(data)) {
+            return;
+        }
+
         this->db->execute(
-            "INSERT OR REPLACE INTO blacklist
-                (id, ip, country, whois, service, ipvsix, created_at) 
+            "INSERT INTO blacklist
+                (ip, country, whois, service, ipvsix, created_at) 
             VALUES 
                 (
-                    (SELECT id FROM blacklist WHERE ip=:ip),
                     :ip,
                     :country,
                     :whois,
@@ -787,16 +791,26 @@ class Janus extends Controller
         var data;
 
         let data = this->db->get("SELECT * FROM watchlist WHERE ip=:ip", ["ip": ip]);
-        if (empty(data)) {
+        if (!empty(data)) {
+            return;
+        }
+
+        let data = this->db->get(
+            "SELECT id FROM watchlist_log_entries WHERE ip=:ip AND log_line=:log_line",
+            [
+                "ip": ip,
+                "log_line": log_line
+            ]
+        );
+        if (!empty(data)) {
             return;
         }
 
         this->db->execute(
-            "INSERT OR REPLACE INTO watchlist_log_entries
-                (id, ip, log_id, log_line, created_at) 
+            "INSERT INTO watchlist_log_entries
+                (ip, log_id, log_line, created_at) 
             VALUES 
                 (
-                    (SELECT id FROM watchlist_log_entries WHERE ip=:ip AND log_line=:log_line),
                     :ip,
                     :log_id,
                     :log_line,

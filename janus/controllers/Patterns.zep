@@ -47,12 +47,18 @@ class Patterns extends Controller
             if (!this->validate(_POST, ["pattern", "label"])) {
                 let html .= this->error();
             } else {
+                let data = this->db->get(
+                    "SELECT id FROM block_patterns WHERE pattern=:pattern",
+                    ["pattern":  _POST["pattern"]]
+                );
+                if (!empty(data)) {
+                    return;
+                }
                 let status = this->db->execute(
-                    "INSERT OR REPLACE INTO block_patterns
+                    "INSERT INTO block_patterns
                         (id, 'pattern', 'label', 'category', 'note') 
                     VALUES 
                         (
-                            (SELECT id FROM block_patterns WHERE pattern=:pattern),
                             :pattern,
                             :label,
                             :category,

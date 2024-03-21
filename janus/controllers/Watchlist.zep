@@ -71,10 +71,17 @@ class Watchlist extends Controller
                     }
                 }
 
+                let data = this->db->get(
+                    "SELECT id FROM watchlist WHERE ip=:ip",
+                    ["ip":  _POST["ip"]]
+                );
+                if (!empty(data)) {
+                    return;
+                }
+
                 let status = this->db->execute(
-                    "INSERT OR REPLACE INTO watchlist
+                    "INSERT INTO watchlist
                         (
-                            id,
                             'ip',
                             'country',
                             'service',
@@ -84,7 +91,6 @@ class Watchlist extends Controller
                         ) 
                     VALUES 
                         (
-                            (SELECT id FROM watchlist WHERE ip=:ip),
                             :ip,
                             :country,
                             :service,
@@ -157,13 +163,20 @@ class Watchlist extends Controller
         if (empty(data)) {
             throw new Exception("Entry not found");
         }
+
+        let status = this->db->get(
+            "SELECT id FROM blacklist WHERE ip=:ip",
+            ["ip":  data->ip]
+        );
+        if (!empty(status)) {
+            return;
+        }
         
         let status = this->db->execute(
-            "INSERT OR REPLACE INTO blacklist
-                (id, 'ip', 'country', 'whois', 'service', 'created_at') 
+            "INSERT INTO blacklist
+                ('ip', 'country', 'whois', 'service', 'created_at') 
             VALUES 
                 (
-                    (SELECT id FROM blacklist WHERE ip=:ip),
                     :ip,
                     :country,
                     :whois,
@@ -610,13 +623,20 @@ class Watchlist extends Controller
         if (empty(data)) {
             throw new Exception("Entry not found");
         }
+
+        let status = this->db->get(
+            "SELECT id FROM whitelist WHERE ip=:ip",
+            ["ip":  data->ip]
+        );
+        if (!empty(status)) {
+            return;
+        }
         
         let status = this->db->execute(
-            "INSERT OR REPLACE INTO whitelist
-                (id, 'ip', 'country', 'whois', 'service', 'created_at') 
+            "INSERT INTO whitelist
+                ('ip', 'country', 'whois', 'service', 'created_at') 
             VALUES 
                 (
-                    (SELECT id FROM whitelist WHERE ip=:ip),
                     :ip,
                     :country,
                     :whois,
