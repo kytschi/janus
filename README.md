@@ -77,6 +77,20 @@ $db = 'mysql:dbname=janus;host=127.0.0.1;UID=janus;PWD=janus;';
 ```
 
 ### Step 6: login and configure the settings
+Using your `janus.key` you generated in the previous step, output it's contents.
+
+```sh
+more janus.key
+```
+
+Then using the URL you setup for `janus` add the `janus.key` as the path to visit.
+
+#### For example. ####
+
+The key I generated contains `01234567899876543210` so I've access the URL as follows:-
+
+**https://janus.kytschi.com/`01234567899876543210`**
+
 The default login is username: `janus` and password: `letmein` **CHANGE THIS!** Go to `settings` and from there `users` then update the username and password to whatever you like. **Don't use something like `admin` or `root` be creative!**
 
 Next from the `settings` set the various folders and commands to match your server setup.
