@@ -149,9 +149,16 @@ class Controller
             if (!this->validate(_FILES, ["file"])) {
                 let html .= this->error();
             } else {
-                let data = explode(";/*ENDJIM*/", file_get_contents(_FILES["file"]["tmp_name"]));
+                let data = explode(";/*ENDJIM*/", file_get_contents(_FILES["file"]["tmp_name"]));                
                 for sql in data {
-                    let status = this->db->execute(sql);
+                    if (empty(sql)) {
+                        continue;
+                    }
+                    try {
+                        let status = this->db->execute(sql);
+                    } catch \Exception, status {
+                        throw new Exception(status->getMessage());
+                    }
                     if (!is_bool(status)) {
                         throw new Exception(status);
                     }
@@ -159,6 +166,7 @@ class Controller
                 let html .= this->info("Import successful");
             }
         }
+        
         
         let html .= "
         <form method='POST' enctype='multipart/form-data'>

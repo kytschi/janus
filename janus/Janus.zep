@@ -194,11 +194,15 @@ class Janus extends Controller
             let path = this->urlAddKey("/updates-available");
         }
 
-        for route, func in routes {
-            if (strpos(path, this->urlAddKey(route)) !== false) {
-                let output = this->{func}(path);
-                break;
+        try {
+            for route, func in routes {
+                if (strpos(path, this->urlAddKey(route)) !== false) {
+                    let output = this->{func}(path);
+                    break;
+                }
             }
+        } catch \Exception, route {
+            throw new Exception(route->getMessage());
         }
         
         if (empty(output)) {
