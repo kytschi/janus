@@ -34,6 +34,7 @@ Create a PHP module ini and point it to one of the modules in the `compiled` fol
 For example in `/etc/php/8.1/modules/janus.ini` we tell it to look for the module as such,
 ```sh
 ; configuration for php to enable janus
+[janus]
 extension=/var/www/janus/compiled/php8.1-janus.so
 ```
 

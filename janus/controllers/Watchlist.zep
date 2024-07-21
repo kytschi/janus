@@ -76,44 +76,47 @@ class Watchlist extends Controller
                     ["ip":  _POST["ip"]]
                 );
                 if (!empty(data)) {
-                    return;
-                }
-
-                let status = this->db->execute(
-                    "INSERT INTO watchlist
-                        (
-                            'ip',
-                            'country',
-                            'service',
-                            'whois',
-                            'created_at',
-                            'note'
-                        ) 
-                    VALUES 
-                        (
-                            :ip,
-                            :country,
-                            :service,
-                            :whois,
-                            :created_at,
-                            :note
-                        )",
-                    [
+                    let html .= this->info("Entry already created");
+                } else {
+                    let data = [
                         "ip": _POST["ip"],
                         "country": country,
                         "service": service,
                         "whois": whois,
                         "created_at": date("Y-m-d"),
                         "note": isset(_POST["note"]) ? _POST["note"] : ""
-                    ]
-                );
+                    ];
 
-                if (!is_bool(status)) {
-                    throw new Exception(status);
+                    let status = this->db->execute(
+                        "INSERT INTO watchlist
+                            (
+                                ip,
+                                country,
+                                service,
+                                whois,
+                                created_at,
+                                note
+                            ) 
+                        VALUES 
+                            (
+                                :ip,
+                                :country,
+                                :service,
+                                :whois,
+                                :created_at,
+                                :note
+                            )",
+                        data
+                    );
+                
+                    if (!is_bool(status)) {
+                        throw new Exception(status);
+                    }
+                    unset(_POST["ip"]);
+                    let ip = "";
+                    let html .= this->info("Entry created");
+                    this->writeCronFiles(true);
                 }
-                unset(_POST["ip"]);
-                let html .= this->info("Entry created");
-                this->writeCronFiles(true);
             }
         }
 
@@ -174,7 +177,7 @@ class Watchlist extends Controller
         
         let status = this->db->execute(
             "INSERT INTO blacklist
-                ('ip', 'country', 'whois', 'service', 'created_at') 
+                (ip, country, whois, service, created_at) 
             VALUES 
                 (
                     :ip,
@@ -532,9 +535,10 @@ class Watchlist extends Controller
         let count = this->db->get(count . where, vars);
         let count = count->total;
 
-        let query .= where . " ORDER BY patterns DESC, watchlist.ip ASC LIMIT " . page . ", " . this->per_page;
-
+        let query .= where . " ORDER BY patterns DESC, watchlist.ip ASC 
+            LIMIT " . ((page - 1) * this->per_page) . ", " . this->per_page;
         let data = this->db->all(query, vars);
+
         if (count) {
             let html .= "
                 <form action='" . this->urlAddKey("/watchlist") . "' method='post'>
@@ -634,7 +638,7 @@ class Watchlist extends Controller
         
         let status = this->db->execute(
             "INSERT INTO whitelist
-                ('ip', 'country', 'whois', 'service', 'created_at') 
+                (ip, country, whois, service, created_at) 
             VALUES 
                 (
                     :ip,

@@ -82,47 +82,48 @@ class Blacklist extends Controller
 
                 let data = this->db->get("SELECT id FROM blacklist WHERE ip=:ip", ["ip": ip]);
                 if (empty(data)) {
-                    return;
-                }
+                    let html .= this->info("Entry already created");
+                } else {
+                    let status = this->db->execute(
+                        "INSERT INTO blacklist
+                            (
+                                'ip',
+                                'country',
+                                'service',
+                                'whois',
+                                'ipvsix',
+                                'created_at',
+                                'note'
+                            ) 
+                        VALUES 
+                            (
+                                :ip,
+                                :country,
+                                :service,
+                                :whois,
+                                :ipvsix,
+                                :created_at,
+                                :note
+                            )",
+                        [
+                            "ip": _POST["ip"],
+                            "country": country,
+                            "service": service,
+                            "whois": whois,
+                            "ipvsix": (ipvsix) ? 1 : 0,
+                            "created_at": date("Y-m-d"),
+                            "note": isset(_POST["note"]) ? _POST["note"] : ""
+                        ]
+                    );
 
-                let status = this->db->execute(
-                    "INSERT INTO blacklist
-                        (
-                            'ip',
-                            'country',
-                            'service',
-                            'whois',
-                            'ipvsix',
-                            'created_at',
-                            'note'
-                        ) 
-                    VALUES 
-                        (
-                            :ip,
-                            :country,
-                            :service,
-                            :whois,
-                            :ipvsix,
-                            :created_at,
-                            :note
-                        )",
-                    [
-                        "ip": _POST["ip"],
-                        "country": country,
-                        "service": service,
-                        "whois": whois,
-                        "ipvsix": (ipvsix) ? 1 : 0,
-                        "created_at": date("Y-m-d"),
-                        "note": isset(_POST["note"]) ? _POST["note"] : ""
-                    ]
-                );
-
-                if (!is_bool(status)) {
-                    throw new Exception(status);
+                    if (!is_bool(status)) {
+                        throw new Exception(status);
+                    }
+                    unset(_POST["ip"]);
+                    let ip = "";
+                    let html .= this->info("Entry created");
+                    this->writeCronFiles(true);
                 }
-                unset(_POST["ip"]);
-                let html .= this->info("Entry created");
-                this->writeCronFiles(true);
             }
         }
 
@@ -404,7 +405,7 @@ class Blacklist extends Controller
         let count = this->db->get(count . where, vars);
         let count = count->total;
 
-        let query .= where . " ORDER BY patterns DESC, blacklist.ip ASC LIMIT " . page . ", " . this->per_page;
+        let query .= where . " ORDER BY patterns DESC, blacklist.ip ASC LIMIT " . ((page - 1) * this->per_page) . ", " . this->per_page;
 
         let data = this->db->all(query, vars);
         if (count) {

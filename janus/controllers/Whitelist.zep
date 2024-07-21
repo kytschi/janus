@@ -85,50 +85,51 @@ class Whitelist extends Controller
                     ["ip":  _POST["ip"]]
                 );
                 if (!empty(status)) {
-                    return;
-                }
+                    let html .= this->info("Entry already created");
+                } else {
+                    let status = this->db->execute(
+                        "INSERT INTO whitelist
+                            (
+                                ip,
+                                country,
+                                service,
+                                whois,
+                                ipvsix,
+                                created_at,
+                                label,
+                                note
+                            ) 
+                        VALUES 
+                            (
+                                :ip,
+                                :country,
+                                :service,
+                                :whois,
+                                :ipvsix,
+                                :created_at,
+                                :label,
+                                :note
+                            )",
+                        [
+                            "ip": _POST["ip"],
+                            "country": country,
+                            "service": service,
+                            "whois": whois,
+                            "ipvsix": (ipvsix) ? 1 : 0,
+                            "created_at": date("Y-m-d"),
+                            "label": isset(_POST["label"]) ? _POST["label"] : "",
+                            "note": isset(_POST["note"]) ? _POST["note"] : ""
+                        ]
+                    );
 
-                let status = this->db->execute(
-                    "INSERT INTO whitelist
-                        (
-                            'ip',
-                            'country',
-                            'service',
-                            'whois',
-                            'ipvsix',
-                            'created_at',
-                            'label',
-                            'note'
-                        ) 
-                    VALUES 
-                        (
-                            :ip,
-                            :country,
-                            :service,
-                            :whois,
-                            :ipvsix,
-                            :created_at,
-                            :label,
-                            :note
-                        )",
-                    [
-                        "ip": _POST["ip"],
-                        "country": country,
-                        "service": service,
-                        "whois": whois,
-                        "ipvsix": (ipvsix) ? 1 : 0,
-                        "created_at": date("Y-m-d"),
-                        "label": isset(_POST["label"]) ? _POST["label"] : "",
-                        "note": isset(_POST["note"]) ? _POST["note"] : ""
-                    ]
-                );
-
-                if (!is_bool(status)) {
-                    throw new Exception(status);
+                    if (!is_bool(status)) {
+                        throw new Exception(status);
+                    }
+                    unset(_POST["ip"]);
+                    let ip = "";
+                    let html .= this->info("Entry created");
+                    this->writeCronFiles(true);
                 }
-                unset(_POST["ip"]);
-                let html .= this->info("Entry created");
-                this->writeCronFiles(true);
             }
         }
 
@@ -200,7 +201,7 @@ class Whitelist extends Controller
 
         let status = this->db->execute(
             "INSERT INTO blacklist
-                (id, 'ip', 'country', 'whois', 'service', 'created_at') 
+                (id, ip, country, whois, service, created_at) 
             VALUES 
                 (
                     (SELECT id FROM blacklist WHERE ip=:ip),
@@ -471,7 +472,7 @@ class Whitelist extends Controller
         let count = this->db->get(count . where, vars);
         let count = count->total;
 
-        let query .= where . " ORDER BY whitelist.ip, whitelist.country LIMIT " . page . ", " . this->per_page;
+        let query .= where . " ORDER BY whitelist.ip, whitelist.country LIMIT " . ((page - 1) * this->per_page) . ", " . this->per_page;
 
         let data = this->db->all(query, vars);
             

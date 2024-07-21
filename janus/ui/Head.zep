@@ -238,7 +238,7 @@ class Head extends Controller
             cursor: pointer;
             text-decoration: none;
             line-height: 20px;
-            padding: 20px 20px 10px 20px;
+            padding: 10px 20px 10px 20px;
             margin-left: 10px;
         }
         .button-blank {
@@ -454,7 +454,7 @@ class Head extends Controller
             background-color: var(--text-heading-background-colour);
             border: 3px solid var(--text-heading-border-colour);
             margin: 0;
-            padding: 20px 20px 10px 20px;
+            padding: 10px 20px 10px 20px;
             box-shadow: var(--box-shadow);
         }
         .required {
@@ -582,7 +582,7 @@ class Head extends Controller
             cursor: pointer;
             text-decoration: none;
             line-height: 20px;
-            padding: 20px 20px 10px 20px;
+            padding: 10px 20px 10px 20px;
         }
         .pill {
             border-radius: 20px;
@@ -596,7 +596,7 @@ class Head extends Controller
         }
         .pill.heading {
             font-size: 22pt !important;
-            padding: 20px 20px 10px 20px;
+            padding: 10px 20px 10px 20px;
         }
         .tag strong {
             text-transform: none !important;

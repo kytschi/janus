@@ -52,30 +52,31 @@ class Patterns extends Controller
                     ["pattern":  _POST["pattern"]]
                 );
                 if (!empty(data)) {
-                    return;
-                }
-                let status = this->db->execute(
-                    "INSERT INTO block_patterns
-                        (id, 'pattern', 'label', 'category', 'note') 
-                    VALUES 
-                        (
-                            :pattern,
-                            :label,
-                            :category,
-                            :note
-                        )",
-                    [
-                        "pattern": _POST["pattern"],
-                        "label": _POST["label"],
-                        "category": isset(_POST["category"]) ? _POST["category"] : "None",
-                        "note": isset(_POST["note"]) ? _POST["note"] : ""
-                    ]
-                );
+                    let html .= this->info("Entry already created");
+                } else {
+                    let status = this->db->execute(
+                        "INSERT INTO block_patterns
+                            (id, pattern, label, category, note) 
+                        VALUES 
+                            (
+                                :pattern,
+                                :label,
+                                :category,
+                                :note
+                            )",
+                        [
+                            "pattern": _POST["pattern"],
+                            "label": _POST["label"],
+                            "category": isset(_POST["category"]) ? _POST["category"] : "None",
+                            "note": isset(_POST["note"]) ? _POST["note"] : ""
+                        ]
+                    );
 
-                if (!is_bool(status)) {
-                    throw new Exception(status);
+                    if (!is_bool(status)) {
+                        throw new Exception(status);
+                    }
+                    let html .= this->info("Entry created");
                 }
-                let html .= this->info("Entry created");
             }
         }
         
@@ -360,7 +361,7 @@ class Patterns extends Controller
         let count = this->db->get(count . where, vars);
         let count = count->total;
 
-        let query .= where . " ORDER BY pattern LIMIT " . page . ", " . this->per_page;
+        let query .= where . " ORDER BY pattern LIMIT " . ((page - 1) * this->per_page) . ", " . this->per_page;
         
         let categories = this->db->all(categories_query, vars);
         let data = this->db->all(query, vars);
