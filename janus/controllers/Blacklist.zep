@@ -87,13 +87,13 @@ class Blacklist extends Controller
                     let status = this->db->execute(
                         "INSERT INTO blacklist
                             (
-                                'ip',
-                                'country',
-                                'service',
-                                'whois',
-                                'ipvsix',
-                                'created_at',
-                                'note'
+                                ip,
+                                country,
+                                service,
+                                whois,
+                                ipvsix,
+                                created_at,
+                                note
                             ) 
                         VALUES 
                             (
@@ -505,7 +505,7 @@ class Blacklist extends Controller
 
         let status = this->db->execute(
             "INSERT INTO whitelist
-                ('ip', 'country', 'whois', 'service', 'created_at') 
+                (ip, country, whois, service, created_at) 
             VALUES 
                 (
                     :ip,
