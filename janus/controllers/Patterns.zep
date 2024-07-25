@@ -56,7 +56,7 @@ class Patterns extends Controller
                 } else {
                     let status = this->db->execute(
                         "INSERT INTO block_patterns
-                            (id, pattern, label, category, note) 
+                            (pattern, label, category, note) 
                         VALUES 
                             (
                                 :pattern,
