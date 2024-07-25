@@ -81,7 +81,7 @@ class Blacklist extends Controller
                 }
 
                 let data = this->db->get("SELECT id FROM blacklist WHERE ip=:ip", ["ip": ip]);
-                if (empty(data)) {
+                if (!empty(data)) {
                     let html .= this->info("Entry already created");
                 } else {
                     let status = this->db->execute(
