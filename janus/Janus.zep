@@ -656,7 +656,7 @@ class Janus extends Controller
 
     private function runMigrations()
     {
-        var migration, migrations, err, found;
+        var migration, migrations, err, found, file, line;
 
         echo " Running migrations\n";
         let migration = shell_exec("ls " . rtrim(this->settings->cron_folder, "/") . "/migrations/*.sql");
@@ -691,32 +691,41 @@ class Janus extends Controller
             }
 
             try {
-                let found = file_get_contents(migration);
+                let file = fopen(migration, "r");
+                if (file) {
+                    let line = fgets(file);
+                    while (line !== false) {
+                        if (!empty(line) && line != "\n") {
+                            if (
+                                strpos(line, "IGNORE SQLITE") !== false &&
+                                strpos(this->settings->db_file, "sqlite:") !== false
+                            ) {
+                                break;
+                            }
 
-                if (
-                    strpos(found, "IGNORE SQLITE") !== false &&
-                    strpos(this->settings->db_file, "sqlite:") !== false
-                ) {
-                    continue;
-                }
+                            if (substr(line, 0, 2) !== "/*") {
+                                echo line . "\n";
+                                let found = this->db->execute(line);
+                                if (!is_bool(found)) {
+                                    throw new Exception(found);
+                                }
+                            }
+                        }
+                        let line = fgets(file);
+                    }
 
-                let found = this->db->execute(found);
-                if (!is_bool(found)) {
-                    echo " Failed to run the migration " . basename(migration) .
-                        "\n Error: ". found . "\n";
-                } else {
+                    fclose(file);
+
                     echo " " . basename(migration) . " successfully run\n";
-                }
-
-                let found = this->db->execute(
-                    "INSERT INTO migrations (migration) VALUES(:migration)",
-                    [
-                        "migration": basename(migration)
-                    ]
-                );
-                if (!is_bool(found)) {
-                    echo " Failed to save the migration " . basename(migration) .
-                        " in the migrations table\n Error: ". found . "\n";
+                    let found = this->db->execute(
+                        "INSERT INTO migrations (migration) VALUES(:migration)",
+                        [
+                            "migration": basename(migration)
+                        ]
+                    );
+                    if (!is_bool(found)) {
+                        throw new Exception(found);
+                    }
                 }
             } catch \Exception, err {
                 echo " Failed to run the migration " . basename(migration) .

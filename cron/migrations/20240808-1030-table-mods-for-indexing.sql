@@ -23,6 +23,7 @@ ALTER TABLE block_patterns MODIFY COLUMN `category` varchar(255) CHARACTER SET u
 ALTER TABLE found_block_patterns MODIFY COLUMN `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL NULL;
 ALTER TABLE found_block_patterns MODIFY COLUMN `ip` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL NULL;
 ALTER TABLE found_block_patterns MODIFY COLUMN `category` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL NULL;
+UPDATE found_block_patterns SET `created_at`=NOW() WHERE `created_at` IS NULL;
 ALTER TABLE found_block_patterns MODIFY COLUMN `created_at` date NOT NULL;
 
 /* settings table */
@@ -52,13 +53,13 @@ ALTER TABLE watchlist MODIFY COLUMN created_at date NOT NULL;
 ALTER TABLE watchlist ADD INDEX (created_at);
 
 /* watchlist_log_entries table */
-ALTER TABLE watchlist MODIFY COLUMN ip varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
-ALTER TABLE watchlist ADD INDEX (ip);
+ALTER TABLE watchlist_log_entries MODIFY COLUMN ip varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
+ALTER TABLE watchlist_log_entries ADD INDEX (ip);
 
-ALTER TABLE watchlist MODIFY COLUMN created_at date NOT NULL;
-ALTER TABLE watchlist ADD INDEX (created_at);
+ALTER TABLE watchlist_log_entries MODIFY COLUMN created_at date NOT NULL;
+ALTER TABLE watchlist_log_entries ADD INDEX (created_at);
 
-ALTER TABLE watchlist ADD INDEX (log_id);
+ALTER TABLE watchlist_log_entries ADD INDEX (log_id);
 
 /* whitelist table */
 ALTER TABLE whitelist MODIFY COLUMN ip varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
