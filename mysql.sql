@@ -299,6 +299,7 @@ INSERT INTO `migrations` VALUES
 (17,'20230710-1100-blacklist-note.sql'),
 (18,'20230710-1100-whitelist-note.sql'),
 (19,'20230711-1007-whitelist-label.sql');
+(20,'20240808-1030-table-mods-for-indexing.sql');
 /*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
 UNLOCK TABLES;
 

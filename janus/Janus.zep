@@ -663,12 +663,12 @@ class Janus extends Controller
         echo " Running migrations\n";
         let migration = shell_exec("ls " . rtrim(this->settings->cron_folder, "/") . "/migrations/*.sql");
         if (empty(migration)) {
-            echo "Nothing to migrate!\n";
+            echo " Nothing to migrate!\n";
             return;
         }
         let migrations = explode("\n", migration);
         if (!count(migrations)) {
-            echo "Nothing to migrate!\n";
+            echo " Nothing to migrate!\n";
             return;
         }
 
@@ -693,14 +693,21 @@ class Janus extends Controller
             }
 
             try {
-                let found = this->db->execute(
-                    file_get_contents(migration)
-                );
+                let found = file_get_contents(migration);
+
+                if (
+                    strpos(found, "IGNORE SQLITE") !== false &&
+                    strpos(this->settings->db_file, "sqlite:") !== false
+                ) {
+                    continue;
+                }
+
+                let found = this->db->execute(found);
                 if (!is_bool(found)) {
-                    echo "Failed to run the migration " . basename(migration) .
+                    echo " Failed to run the migration " . basename(migration) .
                         "\n Error: ". found . "\n";
                 } else {
-                    echo basename(migration) . " successfully run\n";
+                    echo " " . basename(migration) . " successfully run\n";
                 }
 
                 let found = this->db->execute(
