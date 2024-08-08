@@ -22,9 +22,11 @@ ALTER TABLE block_patterns MODIFY COLUMN `category` varchar(255) CHARACTER SET u
 /* found_block_patterns table */
 ALTER TABLE found_block_patterns MODIFY COLUMN `label` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL NULL;
 ALTER TABLE found_block_patterns MODIFY COLUMN `ip` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL NULL;
+ALTER TABLE found_block_patterns ADD INDEX (ip);
 ALTER TABLE found_block_patterns MODIFY COLUMN `category` varchar(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL NULL;
 UPDATE found_block_patterns SET `created_at`=NOW() WHERE `created_at` IS NULL;
 ALTER TABLE found_block_patterns MODIFY COLUMN `created_at` date NOT NULL;
+ALTER TABLE found_block_patterns ADD INDEX (created_at);
 
 /* settings table */
 ALTER TABLE settings MODIFY COLUMN `firewall_command` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
@@ -37,6 +39,7 @@ ALTER TABLE settings MODIFY COLUMN `firewall_command_v6` varchar(255) CHARACTER 
 
 /* users table */
 ALTER TABLE users MODIFY COLUMN `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
+ALTER TABLE users ADD INDEX (`name`);
 ALTER TABLE users MODIFY COLUMN `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL;
 
 /* watchlist table */

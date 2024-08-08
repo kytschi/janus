@@ -704,7 +704,7 @@ class Janus extends Controller
                             }
 
                             if (substr(line, 0, 2) !== "/*") {
-                                echo line . "\n";
+                                echo " " . line . "\n";
                                 let found = this->db->execute(line);
                                 if (!is_bool(found)) {
                                     throw new Exception(found);
@@ -741,19 +741,21 @@ class Janus extends Controller
 
         this->db->execute(
             "INSERT INTO found_block_patterns
-                (ip, pattern, label, category) 
+                (ip, pattern, label, category, created_at) 
             VALUES 
                 (
                     :ip,
                     :pattern,
                     :label,
-                    :category
+                    :category,
+                    :created_at
                 )",
             [
                 "ip": ip,
                 "pattern": pattern->pattern,
                 "label": pattern->label,
-                "category": pattern->category
+                "category": pattern->category,
+                "created_at": date("Y-m-d")
             ]
         );
 
