@@ -394,7 +394,7 @@ class Blacklist extends Controller
                     WHERE 
                         found_block_patterns.ip=blacklist.ip
                 ) AS patterns,
-                (SELECT id FROM whitelist WHERE whitelist.ip=blacklist.ip) AS whitelisted  
+                (SELECT id FROM whitelist WHERE whitelist.ip=blacklist.ip LIMIT 1) AS whitelisted  
                 FROM blacklist";
         if (isset(_POST["q"])) {
             let where .= " WHERE blacklist.ip=:query";
@@ -405,7 +405,8 @@ class Blacklist extends Controller
         let count = this->db->get(count . where, vars);
         let count = count->total;
 
-        let query .= where . " ORDER BY patterns DESC, blacklist.ip ASC LIMIT " . ((page - 1) * this->per_page) . ", " . this->per_page;
+        let query .= where . " ORDER BY patterns DESC, blacklist.ip ASC LIMIT " . 
+            ((page - 1) * this->per_page) . ", " . this->per_page;
 
         let data = this->db->all(query, vars);
         if (count) {

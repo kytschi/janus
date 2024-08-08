@@ -61,7 +61,8 @@ class Janus extends Controller
                 }
                 break;
             default:
-                throw new Exception("Invalid database connection", (cron || migrations) ? true : false);
+                //Just to stop the compiler warning.
+                this->throwError("Invalid database connection", (cron || migrations) ? true : false);
                 break;
         }
 
@@ -1057,5 +1058,10 @@ class Janus extends Controller
         var controller;
         let controller = new Whitelist();
         return controller->router(path, this->db, this->settings);
+    }
+
+    private function throwError(string message, bool commandline)
+    {
+        throw new Exception(message, commandline);
     }
 }
