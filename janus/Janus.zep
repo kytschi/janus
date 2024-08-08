@@ -189,9 +189,7 @@ class Janus extends Controller
                 }
             }
         } catch \Exception, route {
-            if (!file_exists(rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh")) {
-                this->writeMigrations();
-            }
+            this->writeMigrations();
             let path = this->urlAddKey("/updates-available");
         }
 
