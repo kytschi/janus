@@ -127,7 +127,7 @@ class Controller
             }
         }
 
-        return null;
+        return ips;
     }
 
     public function getService(ip)
