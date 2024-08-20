@@ -69,9 +69,39 @@ class Controller
         return "UNKNOWN";
     }
 
-    public function getIPVSIX(string line)
+    public function getIP(string line, bool single = true)
     {
-        var ip, matches;
+        var ip, matches, ips = [];
+
+        preg_match_all(
+            "/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/",
+            line,
+            matches
+        );
+        
+        if (empty(matches[0])) {
+            return null;
+        }
+
+        for ip in matches[0] {
+            if (
+                strpos(line, "/" . ip) === false &&
+                !strtotime(ip)
+            ) {
+                if (single) {
+                    return ip;
+                } else {
+                    let ips[] = ip;
+                }
+            }
+        }
+
+        return ips;
+    }
+
+    public function getIPVSIX(string line, bool single = true)
+    {
+        var ip, matches, ips = [];
 
         preg_match_all(
             "/([a-f0-9:]+:+)+[a-f0-9]+/",
@@ -89,7 +119,11 @@ class Controller
                 !strtotime(ip) &&
                 substr_count(ip, ":") > 1
             ) {
-                return ip;
+                if (single) {
+                    return ip;
+                } else {
+                    let ips[] = ip;
+                }
             }
         }
 

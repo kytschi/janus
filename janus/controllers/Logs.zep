@@ -36,6 +36,8 @@ class Logs extends Controller
         "/logs": "index"
     ];
 
+    private highlights = [];
+
     public function add(string path)
     {
         var html, status;
@@ -161,7 +163,9 @@ class Logs extends Controller
             <a href='" . this->urlAddKey("/logs/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
         </div>";
 
-        var dir, logs, log, line, lines, iLoop=0, patterns, found, pattern, matches;
+        var dir, logs, log, line, lines, iLoop=0,
+            found, found_ips, found_ip, 
+            buttons, patterns, pattern;
         let dir = shell_exec("ls " . data->log);
         if (!empty(dir)) {
             let logs = explode("\n", dir);
@@ -188,37 +192,55 @@ class Logs extends Controller
                             continue;
                         }
                         
+                        let buttons = "";
+                        let this->highlights = [
+                            "danger": [],
+                            "info": [],
+                            "success": [],
+                            "warning": []
+                        ];
+
                         let found = false;
+                        
                         for pattern in patterns {
                             if (strpos(strtolower(line), strtolower(pattern->pattern)) !== false) {
                                 let found = pattern;
+                                let this->highlights["danger"][] = pattern->pattern;
                                 break;
                             }
                         }
-                        let html .= "<tr><td>";
-                        if (found) {
-                            let html .= "<p class='log-output'>" . htmlentities(line) . "</p>
-                                <a 
-                                    class='tag' 
-                                    title='Found the pattern in Janus'
-                                    href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>
-                                    <strong>Found pattern: " . found->pattern . "</strong>
-                                </a>";
-                        } else {
-                            let html .= "<p class='log-output'>" . htmlentities(line) . "</p>
-                                <a 
-                                    title='Create a pattern from line' 
-                                    href='" .this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) ."'
-                                    class='mini icon icon-patterns'>&nbsp;</a>";
+
+                        let found_ips = this->getIPVSIX(line, false);
+                        if (found_ips) {
+                            for pattern in found_ips {
+                                let buttons .= this->genHTML(pattern);
+                            }
+                        }
+                        let found_ip = this->getIP(line, false);
+                        if (found_ip) {
+                            for pattern in found_ip {
+                                let buttons .= this->genHTML(pattern);
+                            }
                         }
 
-                        let found = this->getIPVSIX(line);
+                        let html .= "<tr><td><p class='log-output'>" .
+                            this->highlight(htmlentities(line), this->highlights) . 
+                            "</p>";
+
                         if (found) {
-                            let html .= this->genHTML(found);
-                        } elseif (preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", line, matches)) {
-                            let html .= this->genHTML(matches[0]);
+                            let html .= "<a 
+                                    class='mini icon icon-patterns active' 
+                                    title='Found pattern: ". found->pattern . "'
+                                    href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>
+                                    &nbsp;
+                                </a>";
+                        } else {
+                            let html .= "<a title='Create a pattern from line' 
+                                href='" .this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) ."'
+                                class='mini icon icon-patterns'>&nbsp;</a>";
                         }
-                        let html .= "</td></tr>";
+
+                        let html .= buttons . "</td></tr>";
                     }
                 }
 
@@ -235,7 +257,7 @@ class Logs extends Controller
 
     private function genHTML(ip)
     {
-        var html, found;
+        var found, html = "", no_match = true;
 
         let found = this->db->get(
             "SELECT * FROM blacklist WHERE ip=:ip",
@@ -245,14 +267,16 @@ class Logs extends Controller
         );
         if (found) {
             let html .= "<a 
-                    class='tag' 
-                    title='Blacklisted in Janus' 
+                    class='mini icon icon-blacklist active' 
+                    title='Found blacklisted IP: " . found->ip . "' 
                     href='" . this->urlAddKey("/blacklist/edit/" . found->id) . "'>
-                    <strong>Found blacklisted IP: " . found->ip . "</strong>
+                    &nbsp;
                 </a>";
+            let this->highlights["danger"][] = found->ip;
+            let no_match = false;
         } else {
             let html .= "<a 
-                title='Create a blacklist entry for IP' 
+                title='Create a blacklist entry for IP: " . ip . "' 
                 href='" .this->urlAddKey("/blacklist/add?ip=" . urlencode(ip)) . "'
                 class='mini icon icon-blacklist'>&nbsp;</a>";
         }
@@ -265,14 +289,18 @@ class Logs extends Controller
         );
         if (found) {
             let html .= "<a 
-                    class='tag' 
-                    title='Whitelisted in Janus' 
+                    class='mini icon icon-whitelist active' 
+                    title='Found whitelisted IP: " . (found->label ? found->label : found->ip) . "' 
                     href='" . this->urlAddKey("/whitelist/edit/" . found->id) . "'>
-                    <strong>Found whitelisted IP: " . (found->label ? found->label : found->ip) . "</strong>
+                    &nbsp;
                 </a>";
+            if (no_match) {
+                let this->highlights["success"][] = found->ip;
+                let no_match = false;
+            }
         } else {
             let html .= "<a 
-                title='Create a whitelist entry for IP' 
+                title='Create a whitelist entry for IP: " . ip . "' 
                 href='" .this->urlAddKey("/whitelist/add?ip=" . urlencode(ip)) . "'
                 class='mini icon icon-whitelist'>&nbsp;</a>";
         }
@@ -285,19 +313,44 @@ class Logs extends Controller
         );
         if (found) {
             let html .= "<a 
-                    class='tag' 
-                    title='Added to watchlist' 
+                    class='mini icon icon-watchlist active' 
+                    title='Found watchlist IP: " . found->ip . "' 
                     href='" . this->urlAddKey("/watchlist/edit/" . found->id) . "'>
-                    <strong>Found watchlist IP: " . found->ip . "</strong>
+                    &nbsp;
                 </a>";
+            if (no_match) {
+                let this->highlights["warning"][] = found->ip;
+                let no_match = false;
+            }
         } else {
             let html .= "<a 
-                title='Create a watchlist entry for IP' 
+                title='Create a watchlist entry for IP: " . ip . "' 
                 href='" .this->urlAddKey("/watchlist/add?ip=" . urlencode(ip)) . "'
                 class='mini icon icon-watchlist'>&nbsp;</a>";
         }
 
+        if (no_match) {
+            let this->highlights["info"][] = ip;
+        }
+
         return html;
+    }
+
+    private function highlight(line, highlights)
+    {
+        var data, highlight, style;
+
+        for style, data in highlights {
+            for highlight in data {
+                let line = str_replace(
+                    highlight,
+                    "<span class='text-" . style . "'>" . highlight . "</span>",
+                    line
+                );
+            }
+        }
+
+        return line;
     }
 
     public function index(string path)

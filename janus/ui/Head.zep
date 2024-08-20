@@ -107,6 +107,10 @@ class Head extends Controller
             --text-required-colour: #221E1F;
             --text-disabled: #a2a2a2;
             --text-deleted: #f44f46;
+            --text-danger: #ce0700;
+            --text-warning: #d4813f;
+            --text-info: #2582c5;
+            --text-success: #2fb344;
         }
         
         /* Fonts */
@@ -288,7 +292,6 @@ class Head extends Controller
             left: 0px !important;
             top: 0px !important;
             background-size: 400px 80px;
-            
         }
         .deleted .round, .deleted .button, .deleted button {
             background-color: var(--box-deleted-background-colour);
@@ -464,6 +467,22 @@ class Head extends Controller
         .text-top {
             vertical-align: top;
         }
+        .text-danger {
+            font-weight: bold;
+            color: var(--text-danger);
+        }
+        .text-info {
+            font-weight: bold;
+            color: var(--text-info);
+        }
+        .text-warning {
+            font-weight: bold;
+            color: var(--text-warning);
+        }
+        .text-success {
+            font-weight: bold;
+            color: var(--text-success);
+        }
 
         /* Sizes */
         .wfull {
@@ -488,6 +507,11 @@ class Head extends Controller
             background-image: url(\"data:image/png;base64, " . this->icons() . "\");
             background-repeat: no-repeat;
             background-position: 0 0;
+        }
+        .icon.active {
+            border-radius: 50%;
+            background-color: var(--box-title-background-colour);
+            border: 3px solid var(--button-border-colour);
         }
         .icon-dashboard::before {
             background-position: 0px 0px;
