@@ -30,12 +30,14 @@ use Janus\Exceptions\Exception;
 class Settings extends Controller
 {
     public routes = [
+        "/settings/iptablesv4": "iptablesVFour",
+        "/settings/iptablesv6": "iptablesVSix",
         "/settings": "index"
     ];
 
     public function index(string path)
     {
-        var html, data, status;
+        var html, data, status, ip, ips = [], found;
         let html = this->pageTitle("Settings");
 
         if (isset(_POST["save"])) {
@@ -106,6 +108,68 @@ class Settings extends Controller
         if (empty(data)) {
             throw new Exception("Failed to read the settings");
         }
+
+        let ips = explode("\n", shell_exec("ip n"));
+        
+        let html .= "
+        <div class='row'>
+            <div class='tag'>System IP(s)</div>
+        </div>
+        <div class='row'>
+            <table class='table wfull'>
+                <thead>
+                    <tr>
+                        <th>IP</th>
+                        <th>MAC</th>
+                        <th>Device</th>
+                        <th>&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>";
+        
+        for status in ips {
+            if (empty(status)) {
+                continue;
+            }
+            
+            let ip = explode(" ", status);
+
+            let found = this->db->get(
+                "SELECT * FROM whitelist WHERE ip=:ip",
+                [
+                    "ip": ip[0]
+                ]
+            );
+
+            let html .= "
+                <tr>
+                    <td>" . ip[0] . "</td>
+                    <td>" . ip[4] . "</td>
+                    <td>" . ip[2] . "</td>
+                    <td>";
+
+            if (found) {
+                let html .= "<a 
+                        class='mini icon icon-whitelist active' 
+                        title='Found whitelisted IP: " . (found->label ? found->label : found->ip) . "' 
+                        href='" . this->urlAddKey("/whitelist/edit/" . found->id) . "'>
+                        &nbsp;
+                    </a>";
+            } else {
+                let html .= "<a 
+                    title='Create a whitelist entry for IP: " . ip[0] . "' 
+                    href='" .this->urlAddKey("/whitelist/add?ip=" . urlencode(ip[0])) . "'
+                    class='mini icon icon-whitelist'>&nbsp;</a>";
+            }
+
+            let html .= "
+                    </td>
+                </tr>";
+        }
+        let html .= "</tbody>
+            </table>
+        </div>";
+
         let html .= "
         <form method='POST'>
             <table class='table wfull'>
@@ -204,7 +268,17 @@ class Settings extends Controller
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan='2'>
+                        <td>
+                            <a 
+                                href='" . this->urlAddKey("/settings/iptablesv4") . "'
+                                class='button'
+                                title='Show iptables list'>IPTables v4</a>
+                            <a 
+                                href='" . this->urlAddKey("/settings/iptablesv6") . "'
+                                class='button'
+                                title='Show iptables list'>IPTables v6</a>
+                        </td>
+                        <td>
                             <button type='submit' name='save' value='save' class='float-right'>save</button>
                             <button 
                                 type='submit' 
@@ -220,6 +294,58 @@ class Settings extends Controller
         </form>
         <div class='page-toolbar'>
             <a href='" . this->urlAddKey("/users") . "' class='round icon icon-users' title='Users'>&nbsp;</a>
+        </div>";
+
+        return html;
+    }
+
+    public function iptablesVFour(string path)
+    {
+        var html, file, line;
+        let html = this->pageTitle("Settings - IPTables V4");
+
+        let html .= "<div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/settings") . "' class='round icon icon-back' title='Back to settings'>&nbsp;</a>
+        </div>
+        <div class='row'><table class='table wfull'><tbody><tr><td><pre><code>";
+
+        let file = fopen(rtrim(this->settings->cron_folder, "/") . "/iv4", "r");
+        let line = fgets(file);
+        while (line !== false) {
+            let html .= line;
+            let line = fgets(file);
+        }
+        fclose(file);
+
+        let html .= "</code></pre></td></tr></tbody></table></div>
+        <div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/settings") . "' class='round icon icon-back' title='Back to settings'>&nbsp;</a>
+        </div>";
+
+        return html;
+    }
+
+    public function iptablesVSix(string path)
+    {
+        var html, file, line;
+        let html = this->pageTitle("Settings - IPTables V6");
+
+        let html .= "<div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/settings") . "' class='round icon icon-back' title='Back to settings'>&nbsp;</a>
+        </div>
+        <div class='row'><table class='table wfull'><tbody><tr><td><pre><code>";
+
+        let file = fopen(rtrim(this->settings->cron_folder, "/") . "/iv6", "r");
+        let line = fgets(file);
+        while (line !== false) {
+            let html .= line;
+            let line = fgets(file);
+        }
+        fclose(file);
+
+        let html .= "</code></pre></td></tr></tbody></table></div>
+        <div class='page-toolbar'>
+            <a href='" . this->urlAddKey("/settings") . "' class='round icon icon-back' title='Back to settings'>&nbsp;</a>
         </div>";
 
         return html;

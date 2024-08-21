@@ -7,6 +7,7 @@ vendor*
 cron/cron.sh
 cron/blacklist*
 cron/whitelist*
+cron/iv*
 cron/migrations/migrations.sh
 janus.db
 janus.key

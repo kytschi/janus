@@ -479,7 +479,12 @@ then
     mkdir " . this->settings->firewall_cfg_folder . "
 fi
 $IPTABLES-save > $CONF
-$IPTABLESVSIX-save > $CONFVSIX"
+$IPTABLESVSIX-save > $CONFVSIX
+
+# Dump the iptables so setting can read them
+$IPTABLES -n -L > $DIR/iv4
+$IPTABLESVSIX -n -L > $DIR/iv6
+"
 );
             // Write the migrations.
             this->writeMigrations();
