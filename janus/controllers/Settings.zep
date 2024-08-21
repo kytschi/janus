@@ -37,7 +37,7 @@ class Settings extends Controller
 
     public function index(string path)
     {
-        var html, data, status, ip, ips = [], found;
+        var html, data, status, ip, ips = [], found, lines, iLoop;
         let html = this->pageTitle("Settings");
 
         if (isset(_POST["save"])) {
@@ -104,12 +104,27 @@ class Settings extends Controller
             let html .= this->info("Cleared the running cron flag");
         }
         
-        let data = this->db->get("SELECT * FROM settings LIMIT 1");
-        if (empty(data)) {
-            throw new Exception("Failed to read the settings");
+        let lines = explode("\n", shell_exec("ip a | grep -e \"inet\" -e \"link\""));
+        let iLoop = 0;
+        for status in lines {
+            if (empty(status)) {
+                continue;
+            }
+            
+            if (strpos(status, "link/") !== false) {
+                let ip = [];
+                let data = explode(" ", trim(status));
+                let ip[0] = data[1];
+            } elseif (strpos(status, "inet") !== false) {
+                let data = explode(" ", trim(status));
+                let ip[1] = str_replace(["/8", "/24", "/64"], "", data[1]);
+                let ip[2] = data[0];
+                let ips[iLoop] = ip;
+                let iLoop = iLoop + 1;
+            } else {
+                continue;
+            }
         }
-
-        let ips = explode("\n", shell_exec("ip n"));
         
         let html .= "
         <div class='row'>
@@ -121,30 +136,24 @@ class Settings extends Controller
                     <tr>
                         <th>IP</th>
                         <th>MAC</th>
-                        <th>Device</th>
+                        <th>Type</th>
                         <th>&nbsp;</th>
                     </tr>
                 </thead>
                 <tbody>";
         
-        for status in ips {
-            if (empty(status)) {
-                continue;
-            }
-            
-            let ip = explode(" ", status);
-
+        for ip in ips {
             let found = this->db->get(
                 "SELECT * FROM whitelist WHERE ip=:ip",
                 [
-                    "ip": ip[0]
+                    "ip": ip[1]
                 ]
             );
 
             let html .= "
                 <tr>
+                    <td>" . ip[1] . "</td>
                     <td>" . ip[0] . "</td>
-                    <td>" . ip[4] . "</td>
                     <td>" . ip[2] . "</td>
                     <td>";
 
@@ -157,8 +166,8 @@ class Settings extends Controller
                     </a>";
             } else {
                 let html .= "<a 
-                    title='Create a whitelist entry for IP: " . ip[0] . "' 
-                    href='" .this->urlAddKey("/whitelist/add?ip=" . urlencode(ip[0])) . "'
+                    title='Create a whitelist entry for IP: " . ip[1] . "' 
+                    href='" .this->urlAddKey("/whitelist/add?ip=" . urlencode(ip[1])) . "'
                     class='mini icon icon-whitelist'>&nbsp;</a>";
             }
 
@@ -169,6 +178,11 @@ class Settings extends Controller
         let html .= "</tbody>
             </table>
         </div>";
+
+        let data = this->db->get("SELECT * FROM settings LIMIT 1");
+        if (empty(data)) {
+            throw new Exception("Failed to read the settings");
+        }
 
         let html .= "
         <form method='POST'>
