@@ -123,6 +123,10 @@ To update the database with the latest migrations, make sure the webserver user 
 
 This will create a bash script called `migrations.sh` simply run this from your terminal and any new migrations will be executed. The `migrations.sh` is located in the `cron/migrations` folder.
 
+```sh
+sh /var/www/janus/cron/migrations/migrations.sh
+```
+
 ## Logs
 I've managed to test this with nginx, apache, ssh and mail logs. So far it's managed to find the pattern and IPs from them. If your find it's not working for your logs either open an issue with a sample of your log (DONT SHARE SENSITIVE INFO) or drop me a message at dev@kytschi.com and I'll see if I can sort it.
 
