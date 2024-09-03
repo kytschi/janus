@@ -871,7 +871,7 @@ class Janus extends Controller
             this->db->execute("UPDATE settings SET cron_running=1");
 
             var folder, dir, logs, log, lines, line, pattern, patterns = [],
-                matches, db_logs, errors = [], html, ipvsix, ip;
+                matches, db_logs, errors = [], html, ipvsix, ip, line_number, last_line;
 
             let patterns = this->db->all("SELECT * FROM block_patterns");
             let db_logs = this->db->all("SELECT * FROM logs");
@@ -886,6 +886,23 @@ class Janus extends Controller
                     }
                     continue;
                 }
+
+                //Check the md5 hash to see if it has changed.
+                let line = md5_file(folder->log);
+                if (folder->md5_hash) {
+                    if (folder->md5_hash == line) {
+                        continue;
+                    }
+                }
+
+                this->db->execute(
+                    "UPDATE logs SET md5_hash=:md5_hash WHERE id=:id",
+                    [
+                        "id": folder->id,
+                        "md5_hash": line
+                    ]
+                );
+
                 let logs = explode("\n", dir);
                 if (!count(logs)) {
                     continue;
@@ -896,15 +913,25 @@ class Janus extends Controller
                         continue;
                     }
 
-                    let lines = explode("\n", file_get_contents(log));
-                    if (empty(lines)) {
+                    let dir = new \SplFileObject(log);
+                    if (dir->eof()) {
                         continue;
                     }
 
-                    for line in lines {
+                    let line_number = 0;
+                    if (folder->last_line_number) {
+                        dir->seek(folder->last_line_number);
+                    }
+
+                    let last_line = "";
+                    while (!dir->eof()) {
+                        let line_number = dir->key();
+                        let line = dir->current();
                         if (empty(line)) {
                             continue;
                         }
+                        let last_line = line;
+
                         let ip = null;
                         let ipvsix = null;
 
@@ -951,7 +978,17 @@ class Janus extends Controller
                                 }                            
                             }
                         }
+                        dir->next();
                     }
+
+                    this->db->execute(
+                        "UPDATE logs SET last_line_number=:last_line_number,last_line=:last_line WHERE id=:id",
+                        [
+                            "id": folder->id,
+                            "last_line_number": line_number,
+                            "last_line": last_line
+                        ]
+                    );
                 }
             }
 
