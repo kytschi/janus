@@ -108,7 +108,14 @@ Now set yourself a `cron` up to trigger the `cron.sh` at a time that suits you. 
 0 4 * * * sh /var/www/janus/cron/cron.sh > /dev/null 2>&1
 ```
 
-Depending on how often you run the cron, I'd recommend that you watch the previous days logs and make sure you log rotate accordingly. This way you'll be blocking suspicious activing from the day before rather than on the day. Of course if your watching the logs faster than every 24hrs then use the current day's logs. This I just find this a good way of teaching the system what to watch for a block pattern without removing those suspicious requests too fast.
+Or if you'd like to have Janus watching every minute to block things much faster go with,
+```sh
+* * * * * sh /var/www/janus/cron/cron.sh > /dev/null 2>&1
+```
+
+**Note: make sure to adjust the `/var/www/janus/cron/cron.sh` to point to your correct folder.**
+
+Depending on how often you run the cron, I'd recommend that you watch the previous days logs and make sure you log rotate accordingly. This way you'll be blocking suspicious activing from the day before rather than on the day. Of course if your watching the logs faster than every 24hrs then use the current day's logs. I just find this a good way of teaching the system what to watch for a block pattern without removing those suspicious requests too fast.
 
 Once you've got the patterns down, move to live logs and up your cron watch time.
 
