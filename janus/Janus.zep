@@ -865,13 +865,11 @@ class Janus extends Controller
             </div>";
         }
 
-        var err;
+        var folder, dir, logs, log, line, pattern, patterns = [],
+            matches, db_logs, errors = [], html, ipvsix, ip, line_number, last_line, err;
 
         try {
             this->db->execute("UPDATE settings SET cron_running=1");
-
-            var folder, dir, logs, log, lines, line, pattern, patterns = [],
-                matches, db_logs, errors = [], html, ipvsix, ip, line_number, last_line;
 
             let patterns = this->db->all("SELECT * FROM block_patterns");
             let db_logs = this->db->all("SELECT * FROM logs");
@@ -895,11 +893,22 @@ class Janus extends Controller
                     }
                 }
 
+                // If the last read of the log is more than 24hrs old rest line pointer.
+                if (empty(folder->last_read)) {
+                    let folder->last_line_number = 0;
+                } else {
+                    let err = strtotime(folder->last_read) - time();
+                    if (err > 86400) {
+                        let folder->last_line_number = 0;
+                    }
+                }
+
                 this->db->execute(
-                    "UPDATE logs SET md5_hash=:md5_hash WHERE id=:id",
+                    "UPDATE logs SET md5_hash=:md5_hash, last_read=:last_read WHERE id=:id",
                     [
                         "id": folder->id,
-                        "md5_hash": line
+                        "md5_hash": line,
+                        "last_read": date("Y-m-d H:i:s")
                     ]
                 );
 

@@ -9,7 +9,7 @@ Make sure to carefully build your whitelist so not to block valid services or se
 ![Snapshot](https://github.com/kytschi/janus/blob/main/screenshot.jpg)
 
 ## Requirements
-* PHP 7.4 or 8+
+* PHP 7.4 to 8.3
 * PHP-PDO
 * PHP-GD
 * PHP-SQLite (optional depending on your preferred db choice)

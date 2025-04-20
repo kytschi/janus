@@ -163,96 +163,102 @@ class Logs extends Controller
             <a href='" . this->urlAddKey("/logs/delete/" . data->id) . "' class='round icon icon-delete' title='Delete the entry'>&nbsp;</a>
         </div>";
 
-        var dir, logs, log, line, lines, iLoop=0,
-            found, found_ips, found_ip, 
-            buttons, patterns, pattern;
-        let dir = shell_exec("ls " . data->log);
-        if (!empty(dir)) {
-            let logs = explode("\n", dir);
+        var err, dir, logs, log, line, lines, iLoop=0, found, found_ips, found_ip, buttons, patterns, pattern;
 
-            if (!empty(logs)) {
-                let patterns = this->db->all("SELECT * FROM block_patterns");
+        try {
+            let dir = shell_exec("ls " . data->log);
+            if (!empty(dir)) {
+                let logs = explode("\n", dir);
 
-                let html .= "<h2><span>The log</span></h2>
-                <table class='table wfull'>
-                    <tbody>";
+                if (!empty(logs)) {
+                    let patterns = this->db->all("SELECT * FROM block_patterns");
 
-                for log in logs {
-                    if (empty(log)) {
-                        continue;
-                    }
+                    let html .= "<h2><span>The log</span></h2>
+                    <table class='table wfull'>
+                        <tbody>";
 
-                    let lines = explode("\n", file_get_contents(log));
-                    if (empty(lines)) {
-                        continue;
-                    }
-
-                    for iLoop, line in lines {
-                        if (empty(line)) {
+                    for log in logs {
+                        if (empty(log)) {
                             continue;
                         }
-                        
-                        let buttons = "";
-                        let this->highlights = [
-                            "danger": [],
-                            "info": [],
-                            "success": [],
-                            "warning": []
-                        ];
 
-                        let found = false;
-                        
-                        for pattern in patterns {
-                            if (strpos(strtolower(line), strtolower(pattern->pattern)) !== false) {
-                                let found = pattern;
-                                let this->highlights["danger"][] = pattern->pattern;
-                                break;
+                        if (!is_readable(log)) {
+                            throw new Exception("Failed to read the log file, " . log);
+                        }
+                        let lines = explode("\n", file_get_contents(log));
+                        if (empty(lines)) {
+                            continue;
+                        }
+
+                        for iLoop, line in lines {
+                            if (empty(line)) {
+                                continue;
                             }
-                        }
+                            
+                            let buttons = "";
+                            let this->highlights = [
+                                "danger": [],
+                                "info": [],
+                                "success": [],
+                                "warning": []
+                            ];
 
-                        let found_ips = this->getIPVSIX(line, false);
-                        if (found_ips) {
-                            for pattern in found_ips {
-                                let buttons .= this->genHTML(pattern);
+                            let found = false;
+                            
+                            for pattern in patterns {
+                                if (strpos(strtolower(line), strtolower(pattern->pattern)) !== false) {
+                                    let found = pattern;
+                                    let this->highlights["danger"][] = pattern->pattern;
+                                    break;
+                                }
                             }
-                        }
-                        let found_ip = this->getIP(line, false);
-                        if (found_ip) {
-                            for pattern in found_ip {
-                                let buttons .= this->genHTML(pattern);
+
+                            let found_ips = this->getIPVSIX(line, false);
+                            if (found_ips) {
+                                for pattern in found_ips {
+                                    let buttons .= this->genHTML(pattern);
+                                }
                             }
+                            let found_ip = this->getIP(line, false);
+                            if (found_ip) {
+                                for pattern in found_ip {
+                                    let buttons .= this->genHTML(pattern);
+                                }
+                            }
+
+                            let html .= "<tr><td><p class='log-output'>" .
+                                this->highlight(htmlentities(line), this->highlights) . 
+                                "</p>";
+
+                            if (found) {
+                                let html .= "<a 
+                                        class='mini icon icon-patterns active' 
+                                        title='Found pattern: ". found->pattern . "'
+                                        href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>
+                                        &nbsp;
+                                    </a>";
+                            } else {
+                                let html .= "<a title='Create a pattern from line' 
+                                    href='" .this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) ."'
+                                    class='mini icon icon-patterns'>&nbsp;</a>";
+                            }
+
+                            let html .= buttons . "</td></tr>";
                         }
-
-                        let html .= "<tr><td><p class='log-output'>" .
-                            this->highlight(htmlentities(line), this->highlights) . 
-                            "</p>";
-
-                        if (found) {
-                            let html .= "<a 
-                                    class='mini icon icon-patterns active' 
-                                    title='Found pattern: ". found->pattern . "'
-                                    href='" . this->urlAddKey("/patterns/edit/" . found->id) . "'>
-                                    &nbsp;
-                                </a>";
-                        } else {
-                            let html .= "<a title='Create a pattern from line' 
-                                href='" .this->urlAddKey("/patterns/add?log=" . data->id . "&line=" . iLoop) ."'
-                                class='mini icon icon-patterns'>&nbsp;</a>";
-                        }
-
-                        let html .= buttons . "</td></tr>";
                     }
-                }
 
-                let html .= "</tbody></table>";
+                    let html .= "</tbody></table>";
+                } else {
+                    let html .= "<h2><span>Failed to read the log</span></h2>";
+                }
             } else {
                 let html .= "<h2><span>Failed to read the log</span></h2>";
             }
-        } else {
-            let html .= "<h2><span>Failed to read the log</span></h2>";
+        
+            return html;
+        } catch \Exception, err {
+            throw new Exception(err->getMessage());
         }
-    
-        return html;
     }
 
     private function genHTML(ip)

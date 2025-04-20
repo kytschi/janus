@@ -1,0 +1,1 @@
+ALTER TABLE logs ADD last_read DATETIME NULL;
