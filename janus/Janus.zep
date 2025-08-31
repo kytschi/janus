@@ -3,10 +3,10 @@
  *
  * @package     Janus\Janus
  * @author 		Mike Welsh
- * @copyright   2023 Mike Welsh
+ * @copyright   2025 Mike Welsh
  * @version     0.0.2 alpha
  *
- * Copyright 2023 Mike Welsh
+ * Copyright 2025 Mike Welsh
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
@@ -109,7 +109,9 @@ class Janus extends Controller
         let this->settings = settings;
 
         if (cron) {
-            this->scan("/scan", cron);
+            if (!this->settings->cron_running) {
+                this->scan("/scan", cron);
+            }
             return;
         } elseif (migrations) {
             this->runMigrations();
