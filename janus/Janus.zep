@@ -39,6 +39,8 @@ use Janus\Ui\Head;
 
 class Janus extends Controller
 {
+    private invalid_chars = ["\"", ",", "’", "'", "/", "�"];
+
     public function __construct(string db, string url_key = "", bool cron = false, bool migrations = false)
     {
         var splits, username = "", password = "";
@@ -309,160 +311,97 @@ class Janus extends Controller
 
     private function ipCountriesUI()
     {
-        var height = 200, labels = [], totals = [], colours = [], data;
+        var html = "", data, item;
 
-        let data = this->db->all("SELECT COUNT(id) AS total, country FROM blacklist GROUP BY country ORDER BY total DESC");
-        if (!empty(data)) {
-            var item;
+        let data = this->db->all(
+            "SELECT COUNT(id) AS total, country 
+            FROM blacklist 
+            GROUP BY country 
+            ORDER BY total DESC"
+        );       
+
+        let html = "
+        <div class='box'>
+            <div class='box-title'>
+                <span>Services</span>
+            </div>
+            <div class='box-body p-0'>";
+
+        if (empty(data)) {
+            let html .= "<p><strong>No countries found</strong></p>";
+        } else {
+            let html .= "<table class='table wfull border-0'>
+                <thead>
+                    <tr>
+                        <th>Country</th>
+                        <th class='border-right-0'>Total</th>
+                    </tr>
+                </thead>
+                <tbody>";
             for item in data {
-                let labels[] = "\"" . str_replace(["\""], "", item->country) . "\"";
-                let totals[] = intval(item->total);
-                let colours[] = "\"#" . substr(md5(item->country), 3, 6) . "\"";
+                let html .= "
+                <tr>
+                    <td class='text-wrap'><strong>" . str_replace(this->invalid_chars, "", item->country) . "</strong></td>
+                    <td class='border-right-0'>" . item->total . "</td>
+                </tr>";
             }
-
-            let height = count(data) * 30;
-            if (height < 200) {
-                let height = 200;
-            }
+            let html .= "</tbody>
+            </table>";
         }
-        
-        let labels = implode(",", labels);
-        let totals = implode(",", totals);
-        let colours = implode(",", colours);
 
-        return  "<div class='box'>
-        <div class='box-title'>
-            <span>Locations</span>
-        </div>
-        <div class='box-body'>
-            <canvas id='countries' width='600' height='" . height . "'></canvas>
-            <script type='text/javascript'>
-                var ctx_countries = document.getElementById('countries').getContext('2d');
-                
-                var countries = new Chart(ctx_countries, {
-                    type: 'horizontalBar',
-                    data: {
-                        labels: [" . labels . "],
-                        datasets: [
-                            {
-                                label: 'IPs',
-                                data: [" . totals . "],
-                                backgroundColor: [" . colours . "],
-                                borderColor: '#5E5E60',
-                                borderWidth: 0.4
-                            },
-                        ]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        scales: {
-                            xAxes: [
-                                {
-                                    gridLines: {
-                                        display: true
-                                    },
-                                    ticks: {
-                                        beginAtZero: true
-                                    },
-                                    position: 'top'
-                                }
-                            ],
-                        },
-                        responsive: true,
-                        legend: {
-                            display: false
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'right'
-                            },
-                            title: {
-                                display: false
-                            }
-                        }
-                    }
-                });
-            </script>
-        </div></div>";
+        let html .= "
+            </div>
+        </div>";
+
+        return html;
     }
 
     private function ipServicesUI()
     {
-        var height = 200, labels = [], totals = [], colours = [], data;
+        var html = "", data, item;
 
-        let data = this->db->all("SELECT COUNT(id) AS total, service FROM blacklist GROUP BY service ORDER BY total DESC");
-        if (!empty(data)) {
-            var item;
-            for item in data {
-                let labels[] = "\"" . str_replace(["\""], "", item->service) . "\"";
-                let totals[] = intval(item->total);
-                let colours[] = "\"#" . substr(md5(item->service), 3, 6) . "\"";
-            }
-
-            let height = count(data) * 30;
-            if (height < 200) {
-                let height = 200;
-            }
-        }
+        let data = this->db->all(
+            "SELECT 
+                COUNT(id) AS total, service 
+            FROM blacklist 
+            GROUP BY service 
+            ORDER BY total DESC"
+        );
         
-        let labels = implode(",", labels);
-        let totals = implode(",", totals);
-        let colours = implode(",", colours);
+        let html = "
+        <div class='box'>
+            <div class='box-title'>
+                <span>Services</span>
+            </div>
+            <div class='box-body p-0'>";
 
-        return  "<div class='box'>
-        <div class='box-title'>
-            <span>Services</span>
-        </div>
-        <div class='box-body'>
-            <canvas id='services' width='600' height='" . height . "'></canvas>
-            <script type='text/javascript'>
-                var ctx_services = document.getElementById('services').getContext('2d');
-                
-                var services = new Chart(ctx_services, {
-                    type: 'horizontalBar',
-                    data: {
-                        labels: [" . labels . "],
-                        datasets: [
-                            {
-                                label: 'IPs',
-                                data: [" . totals . "],
-                                backgroundColor: [" . colours . "],
-                                borderColor: '#5E5E60',
-                                borderWidth: 0.4
-                            },
-                        ]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        scales: {
-                            xAxes: [
-                                {
-                                    gridLines: {
-                                        display: true
-                                    },
-                                    ticks: {
-                                        beginAtZero: true
-                                    },
-                                    position: 'top'
-                                }
-                            ],
-                        },
-                        responsive: true,
-                        legend: {
-                            display: false
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'right'
-                            },
-                            title: {
-                                display: false
-                            }
-                        }
-                    }
-                });
-            </script>
-        </div></div>";
+        if (empty(data)) {
+            let html .= "<p><strong>No services found</strong></p>";
+        } else {
+            let html .= "<table class='table wfull border-0'>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th class='border-right-0'>Total</th>
+                    </tr>
+                </thead>
+                <tbody>";
+            for item in data {
+                let html .= "
+                <tr>
+                    <td class='text-wrap'><strong>" . str_replace(this->invalid_chars, "", item->service) . "</strong></td>
+                    <td class='border-right-0'>" . item->total . "</td>
+                </tr>";
+            }
+            let html .= "</tbody>
+            </table>";
+        }
+
+        let html .= "
+            </div>
+        </div>";
+
+        return html;
     }
 
     private function login(string path)
@@ -579,81 +518,49 @@ class Janus extends Controller
 
     private function patternsUI()
     {
-        var height = 200, labels = [], totals = [], colours = [], data;
+        var html = "", data, item;
 
-        let data = this->db->all("SELECT COUNT(id) AS total, category FROM found_block_patterns GROUP BY category ORDER BY total DESC");
-        if (!empty(data)) {
-            var item;
-            for item in data {
-                let labels[] = "\"" . str_replace(["\""], "", item->category) . "\"";
-                let totals[] = intval(item->total);
-                let colours[] = "\"#" . substr(md5(item->category), 3, 6) . "\"";
-            }
-
-            let height = count(data) * 30;
-            if (height < 200) {
-                let height = 200;
-            }
-        }
+        let data = this->db->all(
+            "SELECT COUNT(id) AS total, category 
+            FROM found_block_patterns 
+            GROUP BY category 
+            ORDER BY total DESC"
+        );
         
-        let labels = implode(",", labels);
-        let totals = implode(",", totals);
-        let colours = implode(",", colours);
+        let html = "
+        <div class='box'>
+            <div class='box-title'>
+                <span>Block patterns</span>
+            </div>
+            <div class='box-body p-0'>";
 
-        return  "<div class='box'>
-        <div class='box-title'>
-            <span>Block patterns</span>
-        </div>
-        <div class='box-body'>
-            <canvas id='patterns' width='600' height='" . height . "'></canvas>
-            <script type='text/javascript'>
-                var ctx_patterns = document.getElementById('patterns').getContext('2d');
-                
-                var patterns = new Chart(ctx_patterns, {
-                    type: 'horizontalBar',
-                    data: {
-                        labels: [" . labels . "],
-                        datasets: [
-                            {
-                                label: 'patterns',
-                                data: [" . totals . "],
-                                backgroundColor: [" . colours . "],
-                                borderColor: '#5E5E60',
-                                borderWidth: 0.4
-                            },
-                        ]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        scales: {
-                            xAxes: [
-                                {
-                                    gridLines: {
-                                        display: true
-                                    },
-                                    ticks: {
-                                        beginAtZero: true
-                                    },
-                                    position: 'top'
-                                }
-                            ],
-                        },
-                        responsive: true,
-                        legend: {
-                            display: false
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'right'
-                            },
-                            title: {
-                                display: false
-                            }
-                        }
-                    }
-                });
-            </script>
-        </div></div>";
+        if (empty(data)) {
+            let html .= "<p><strong>No patterns defined</strong></p>";
+        } else {
+            let html .= "<table class='table wfull border-0'>
+                <thead>
+                    <tr>
+                        <th>Pattern</th>
+                        <th class='border-right-0'>Total</th>
+                    </tr>
+                </thead>
+                <tbody>";
+            for item in data {
+                let html .= "
+                <tr>
+                    <td class='text-wrap'><strong>" . item->category . "</strong></td>
+                    <td class='border-right-0'>" . item->total . "</td>
+                </tr>";
+            }
+            let html .= "</tbody>
+            </table>";
+        }
+
+        let html .= "
+            </div>
+        </div>";
+
+        return html;
     }
 
     private function runMigrations()
@@ -742,7 +649,7 @@ class Janus extends Controller
         var data, country, service, whois;
 
         this->db->execute(
-            "INSERT INTO found_block_patterns
+            "REPLACE INTO found_block_patterns
                 (ip, pattern, label, category, created_at) 
             VALUES 
                 (
@@ -787,7 +694,7 @@ class Janus extends Controller
         }
 
         this->db->execute(
-            "INSERT INTO blacklist
+            "REPLACE INTO blacklist
                 (ip, country, whois, service, ipvsix, created_at) 
             VALUES 
                 (

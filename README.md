@@ -185,3 +185,24 @@ Zephir-lang for making an awesome language!
 https://zephir-lang.com/en
 
 Name the show this is named from? ;-)
+
+## Fixes
+
+### Removing duplicate found patterns
+
+Error in adding found block patterns has resulted in massive amounts of duplicate data. Run the following SQL against the database and remove the duplicates to stop stalled pages.
+
+```
+DELETE FROM found_block_patterns  
+WHERE id IN (
+    SELECT id FROM (
+        SELECT id, 
+               ROW_NUMBER() OVER (
+                   PARTITION BY pattern, ip 
+                   ORDER BY id
+               ) as row_num
+        FROM found_block_patterns
+    ) t
+    WHERE row_num > 1
+);
+```

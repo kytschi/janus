@@ -3,10 +3,10 @@
  *
  * @package     Janus\Controllers\Blacklist
  * @author 		Mike Welsh
- * @copyright   2023 Mike Welsh
+ * @copyright   2025 Mike Welsh
  * @version     0.0.1
  *
- * Copyright 2023 Mike Welsh
+ * Copyright 2025 Mike Welsh
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
@@ -184,7 +184,7 @@ class Blacklist extends Controller
 
     public function edit(string path)
     {
-        var html, data, status;
+        var html, data, status, item;
         let html = this->pageTitle("Blacklisted IP");
 
         let data = this->db->get(
@@ -271,41 +271,29 @@ class Blacklist extends Controller
 
         let data = this->db->all(
             "SELECT
-                main.*,
-                (
-                    SELECT 
-                        count(id) 
-                    FROM 
-                        found_block_patterns AS sub 
-                    WHERE 
-                        sub.ip=main.ip AND sub.pattern=main.pattern 
-                    GROUP BY sub.pattern
-                ) AS total 
-            FROM 
-                found_block_patterns AS main
-            WHERE 
-                main.ip=:ip GROUP BY main.pattern 
-            ORDER BY total DESC, main.label ASC",
+                main.*
+            FROM found_block_patterns AS main
+            WHERE main.ip=:ip 
+            GROUP BY main.pattern 
+            ORDER BY main.label ASC",
             [
                 "ip": data->ip
             ]
         );
+                
         if (count(data)) {
             let html .= "<table class='table wfull'>
                 <thead>
                     <tr>
                         <th>Pattern</th>
-                        <th width='200px'>Matches</th>
                         <th>Label</th>
                         <th>Category</th>
                     </tr>
                 </thead>
                 <tbody>";
-            var item;
             for item in data {
                 let html .= "<tr>
                     <td>" . item->pattern . "</td>
-                    <td>" . item->total . "</td>
                     <td>" . item->label . "</td>
                     <td>" . item->category . "</td>
                 </tr>";
