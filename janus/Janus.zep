@@ -4,7 +4,7 @@
  * @package     Janus\Janus
  * @author 		Mike Welsh
  * @copyright   2025 Mike Welsh
- * @version     0.0.2 alpha
+ * @version     0.0.3 alpha
  *
  * Copyright 2025 Mike Welsh
  * This library is free software; you can redistribute it and/or

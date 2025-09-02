@@ -295,14 +295,17 @@ class Settings extends Controller
                 <tfoot>
                     <tr>
                         <td>
-                            <a 
-                                href='" . this->urlAddKey("/settings/iptablesv4") . "'
-                                class='button'
-                                title='Show iptables list'>IPTables v4</a>
-                            <a 
-                                href='" . this->urlAddKey("/settings/iptablesv6") . "'
-                                class='button'
-                                title='Show iptables list'>IPTables v6</a>
+                            <p>
+                                <a 
+                                    href='" . this->urlAddKey("/settings/iptablesv4") . "'
+                                    class='button'
+                                    title='Show iptables list'>IPTables v4</a>
+                                <a 
+                                    href='" . this->urlAddKey("/settings/iptablesv6") . "'
+                                    class='button'
+                                    title='Show iptables list'>IPTables v6</a>
+                            </p>
+                            <p>Version: 0.0.3 Alpha</p>
                         </td>
                         <td>
                             <button type='submit' name='save' value='save' class='float-right'>save</button>
