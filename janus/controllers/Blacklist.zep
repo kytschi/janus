@@ -4,7 +4,7 @@
  * @package     Janus\Controllers\Blacklist
  * @author 		Mike Welsh
  * @copyright   2025 Mike Welsh
- * @version     0.0.1
+ * @version     0.0.2
  *
  * Copyright 2025 Mike Welsh
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ class Blacklist extends Controller
 
     public function add(string path)
     {
-        var html, status, ip="", ipvsix = false, matches = [];
+        var html, status, ip="", ipvsix = false, matches = [], err;
         let html = this->pageTitle("Blacklist an IP");
 
         if (isset(_POST["ip"])) {
@@ -122,7 +122,12 @@ class Blacklist extends Controller
                     unset(_POST["ip"]);
                     let ip = "";
                     let html .= this->info("Entry created");
-                    this->writeCronFiles(true);
+
+                    try {
+                        this->writeCronFiles(true);
+                    } catch \Exception, err {
+                        throw err;
+                    }
                 }
             }
         }

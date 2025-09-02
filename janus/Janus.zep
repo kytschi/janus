@@ -43,7 +43,7 @@ class Janus extends Controller
 
     public function __construct(string db, string url_key = "", bool cron = false, bool migrations = false)
     {
-        var splits, username = "", password = "";
+        var splits, username = "", password = "", code = 404, path, parsed, output = "", route, func, logged_in = false, err;
 
         let splits = explode(":", db);
 
@@ -148,8 +148,6 @@ class Janus extends Controller
             "/whitelist": "whitelist"
         ];
 
-        var code = 404, path, parsed, output = "", route, func, logged_in = false;
-
         let parsed = parse_url(_SERVER["REQUEST_URI"]);
         let path = "/" . trim(parsed["path"], "/");
 
@@ -192,7 +190,7 @@ class Janus extends Controller
                     throw new \Exception("Run migrations");
                 }
             }
-        } catch \Exception, route {
+        } catch \Exception, err {
             this->writeMigrations();
             let path = this->urlAddKey("/updates-available");
         }
@@ -204,8 +202,8 @@ class Janus extends Controller
                     break;
                 }
             }
-        } catch \Exception, route {
-            throw new Exception(route->getMessage());
+        } catch \Exception, err {
+            throw new Exception(err->getMessage());
         }
         
         if (empty(output)) {
