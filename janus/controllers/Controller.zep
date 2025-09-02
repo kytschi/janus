@@ -383,6 +383,7 @@ class Controller
             }
                     
             // Write the cron.
+            shell_exec("rm " . rtrim(this->settings->cron_folder, "/") . "/cron.sh");
             file_put_contents(
                 rtrim(this->settings->cron_folder, "/") . "/cron.sh",
                 "# !/bin/bash
@@ -493,6 +494,7 @@ $IPTABLESVSIX -n -L > $DIR/iv6
 
     public function writeMigrations()
     {
+        shell_exec("rm " . rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh");
         file_put_contents(
             rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh",
         "#!/bin/bash
