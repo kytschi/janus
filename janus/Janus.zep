@@ -203,7 +203,7 @@ class Janus extends Controller
                 }
             }
         } catch \Exception, err {
-            throw new Exception(err->getMessage());
+            err->fatal(this->settings->url_key);
         }
         
         if (empty(output)) {
@@ -1029,7 +1029,7 @@ class Janus extends Controller
         return controller->router(path, this->db, this->settings);
     }
 
-    private function throwError(string message, bool commandline)
+    private function throwError(string message, bool commandline = false)
     {
         throw new Exception(message, commandline);
     }

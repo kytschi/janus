@@ -351,6 +351,7 @@ class Controller
                     fwrite(file, item->ip. "\n");
                 }
                 fclose(file);
+                
                 let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=1");
                 let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklistv6", "w");
                 if (!file) {

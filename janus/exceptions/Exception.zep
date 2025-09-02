@@ -86,7 +86,7 @@ class Exception extends \Exception
     }
 
     /**
-     * Fatal error just lets us dumb the error out faster and kill the site
+     * Fatal error just lets us dump the error out faster and kill the site
      * so we can't go any futher.
      */
     public function fatal(string url_key = "")
