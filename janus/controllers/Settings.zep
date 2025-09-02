@@ -3,10 +3,10 @@
  *
  * @package     Janus\Controllers\Settings
  * @author 		Mike Welsh
- * @copyright   2023 Mike Welsh
- * @version     0.0.1
+ * @copyright   2025 Mike Welsh
+ * @version     0.0.2
  *
- * Copyright 2023 Mike Welsh
+ * Copyright 2025 Mike Welsh
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
@@ -102,6 +102,9 @@ class Settings extends Controller
                 throw new Exception(status);
             }
             let html .= this->info("Cleared the running cron flag");
+        } elseif (isset(_POST["rebuild_cron"])) {
+            this->writeCronFiles(true);
+            let html .= this->info("Cron has been rebuilt");
         }
         
         let lines = explode("\n", shell_exec("ip a | grep -e \"inet\" -e \"link\""));
@@ -300,6 +303,13 @@ class Settings extends Controller
                                 value='reset_cron' 
                                 class='float-right'>
                                 reset cron
+                            </button>
+                            <button 
+                                type='submit' 
+                                name='rebuild_cron' 
+                                value='rebuild_cron' 
+                                class='float-right'>
+                                rebuild cron
                             </button>
                         </td>
                     </tr>
