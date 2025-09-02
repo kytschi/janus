@@ -110,7 +110,7 @@ class Settings extends Controller
         } elseif (isset(_POST["rebuild_cron"])) {
             try {
                 this->writeCronFiles(true);
-            } catch Exception, err {
+            } catch \Exception, err {
                 throw err;
             }
             let html .= this->info("Cron has been rebuilt");
