@@ -337,12 +337,10 @@ class Controller
 
     public function writeCronFiles(bool write_files = false)
     {
-        var err;
+        var err, data, item, file;
 
         try {
             if (write_files) {
-                var data, item, file;
-
                 // Write the blacklist IPs for CRON.
                 let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=0");
                 let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklist", "w");
@@ -382,7 +380,6 @@ class Controller
                     fwrite(file, item->ip . "\n");
                 }
                 fclose(file);
-                return;
             }
                     
             // Write the cron.
@@ -500,6 +497,7 @@ $IPTABLESVSIX -n -L > $DIR/iv6
             rtrim(this->settings->cron_folder, "/") . "/migrations/migrations.sh",
         "#!/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
+# Created on " . date("Y-d-m H:i:s") . "
 
 php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', false, true);\";"
         );
