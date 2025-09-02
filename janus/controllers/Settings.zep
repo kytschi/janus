@@ -37,7 +37,7 @@ class Settings extends Controller
 
     public function index(string path)
     {
-        var html, data, status, ip, ips = [], found, lines, iLoop;
+        var html, data, status, ip, ips = [], found, lines, iLoop, err;
         let html = this->pageTitle("Settings");
 
         if (isset(_POST["save"])) {
@@ -93,7 +93,12 @@ class Settings extends Controller
                         '" . this->settings->url_key_file . "' AS url_key_file, 
                         '" . this->settings->url_key . "' AS url_key  
                     FROM settings LIMIT 1");
-                this->writeCronFiles();
+                
+                try {
+                    this->writeCronFiles(true);
+                } catch Exception, err {
+                    throw err;
+                }
             }
         } elseif (isset(_POST["reset_cron"])) {
             let status = this->db->execute("UPDATE settings SET cron_running=0");
@@ -103,7 +108,11 @@ class Settings extends Controller
             }
             let html .= this->info("Cleared the running cron flag");
         } elseif (isset(_POST["rebuild_cron"])) {
-            this->writeCronFiles(true);
+            try {
+                this->writeCronFiles(true);
+            } catch Exception, err {
+                throw err;
+            }
             let html .= this->info("Cron has been rebuilt");
         }
         
