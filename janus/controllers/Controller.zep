@@ -337,59 +337,60 @@ class Controller
 
     public function writeCronFiles(bool write_files = false)
     {
-        if (write_files) {
-            var data, item, file;
-
-            // Write the blacklist IPs for CRON.
-            let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=0");
-            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklist", "w");
-            if (!file) {
-                throw new Exception("Failed to write blacklist file for CRON");
-            }
-            for item in data {
-                fwrite(file, item->ip. "\n");
-            }
-            fclose(file);
-            let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=1");
-            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklistv6", "w");
-            if (!file) {
-                throw new Exception("Failed to write blacklist V6 file for CRON");
-            }
-            for item in data {
-                fwrite(file, item->ip. "\n");
-            }
-            fclose(file);
-
-            // Write the whitelist IPs for CRON.
-            let data = this->db->all("SELECT * FROM whitelist WHERE ipvsix=0");
-            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/whitelist", "w");
-            if (!file) {
-                throw new Exception("Failed to write whitelist file for CRON");
-            }
-            for item in data {
-                fwrite(file, item->ip . "\n");
-            }
-            fclose(file);
-            let data = this->db->all("SELECT * FROM whitelist WHERE ipvsix=1");
-            let file = fopen(rtrim(this->settings->cron_folder, "/") . "/whitelistv6", "w");
-            if (!file) {
-                throw new Exception("Failed to write whitelist V6 file for CRON");
-            }
-            for item in data {
-                fwrite(file, item->ip . "\n");
-            }
-            fclose(file);
-            return;
-        }
-        
         var err;
 
         try {
+            if (write_files) {
+                var data, item, file;
+
+                // Write the blacklist IPs for CRON.
+                let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=0");
+                let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklist", "w");
+                if (!file) {
+                    throw new Exception("Failed to write blacklist file for CRON");
+                }
+                for item in data {
+                    fwrite(file, item->ip. "\n");
+                }
+                fclose(file);
+                let data = this->db->all("SELECT * FROM blacklist WHERE ipvsix=1");
+                let file = fopen(rtrim(this->settings->cron_folder, "/") . "/blacklistv6", "w");
+                if (!file) {
+                    throw new Exception("Failed to write blacklist V6 file for CRON");
+                }
+                for item in data {
+                    fwrite(file, item->ip. "\n");
+                }
+                fclose(file);
+
+                // Write the whitelist IPs for CRON.
+                let data = this->db->all("SELECT * FROM whitelist WHERE ipvsix=0");
+                let file = fopen(rtrim(this->settings->cron_folder, "/") . "/whitelist", "w");
+                if (!file) {
+                    throw new Exception("Failed to write whitelist file for CRON");
+                }
+                for item in data {
+                    fwrite(file, item->ip . "\n");
+                }
+                fclose(file);
+                let data = this->db->all("SELECT * FROM whitelist WHERE ipvsix=1");
+                let file = fopen(rtrim(this->settings->cron_folder, "/") . "/whitelistv6", "w");
+                if (!file) {
+                    throw new Exception("Failed to write whitelist V6 file for CRON");
+                }
+                for item in data {
+                    fwrite(file, item->ip . "\n");
+                }
+                fclose(file);
+                return;
+            }
+                    
             // Write the cron.
             file_put_contents(
                 rtrim(this->settings->cron_folder, "/") . "/cron.sh",
                 "# !/bin/bash
 # DO NOT EDIT, AUTOMATICALLY CREATED BY JANUS
+# Created on " . date("Y-d-m H:i:s") . "
 
 php -r \"use Janus\\Janus; new Janus('" . this->settings->db_file . "', '" . this->settings->url_key_file . "', true);\";
 
