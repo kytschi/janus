@@ -3,10 +3,10 @@
  *
  * @package     Janus\Controllers\Database
  * @author 		Mike Welsh
- * @copyright   2023 Mike Welsh
+ * @copyright   2026 Mike Welsh
  * @version     0.0.1
  *
- * Copyright 2023 Mike Welsh
+ * Copyright 2026 Mike Welsh
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either

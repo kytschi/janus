@@ -307,7 +307,7 @@ class Patterns extends Controller
         echo head;
         for iLoop, item in data {
             echo "\n(
-                (SELECT id FROM block_patterns AS src WHERE pattern=\"" . item->pattern . "\" LIMIT 1), 
+                (SELECT id FROM block_patterns AS src WHERE pattern=\"" . addslashes(item->pattern) . "\" LIMIT 1), 
                 \"" . addslashes(item->pattern) . "\", 
                 \"" . addslashes(item->label) . "\", 
                 \"" . addslashes(item->category) . "\"
